@@ -20,7 +20,6 @@ class PlaysData(Dataset):
 
         self.initializing_df_data()
         self.process_plays()
-        self.add_labels()
 
         pd.DataFrame.from_dict(self.data)
         self.converting_numerical()
@@ -58,7 +57,7 @@ class PlaysData(Dataset):
         self.data["qb_speed"] = []
         self.data["qb_direction"] = []
         self.data["qb_accel"] = []
-        self.data["qb_result"] = []
+        self.data["result"] = []
         for i in range(6):
             self.data[f"qb_pressure_{i}"] = []
         
@@ -89,10 +88,16 @@ class PlaysData(Dataset):
                 self.data["qb_speed"].append(qb_snap['s'])
                 self.data["qb_direction"].append(qb_snap['dir'])
                 self.data["qb_accel"].append(qb_snap['a'])
-
-                self.data["qb_result"].append(play_info['passResult'])
+                
+                if self.v == 1 or self.v == 4:
+                    self.data["result"].append()
+                elif self.v == 2:
+                    self.data["result"].append(play_df["dis"])
+                elif self.v == 3:
+                    self.data["result"].append(play_info["passResult"])
 
                 receivers = play_players[play_players['routeRan'].notna()].head(5)
+                receivers = receivers.merge(self.players[['nflId', 'position']], on='nflId', how='left')
                 for i in range(5):
                     if i < len(receivers):
                         r = receivers.iloc[i]
@@ -107,7 +112,7 @@ class PlaysData(Dataset):
                             self.data[f"orientation_{i}"].append(r_snap['o'])
                             dist = ((r_snap['x'] - qb_snap['x']) ** 2 + (r_snap['y'] - qb_snap['y']) ** 2) ** 0.5
                             self.data[f"dist_qb_{i}"].append(dist)
-                            self.data[f"receiver_type_{i}"].append(play_df['position'])
+                            self.data[f"receiver_type_{i}"].append(r['position'])
 
                             defenders = play_df[play_df['position'].isin(['CB', 'S', 'LB', 'FS', 'SS', 'DE', 'DT'])]
                             defenders['dist'] = ((defenders['x'] - r_snap['x']) ** 2 +
@@ -170,9 +175,6 @@ class PlaysData(Dataset):
                 self.data["qb_pressure_1"].append(time_to_sack or 0)
                 self.data["qb_pressure_2"].append(caused_pressure)
                 self.data["qb_pressure_5"].append(time_to_pressure or 0)
-
-    def add_labels(self):
-        pass
 
     def converting_numerical(self):
         pass
