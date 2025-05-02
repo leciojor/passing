@@ -2,13 +2,14 @@ from torch.utils.data import Dataset
 import torch
 import torch.nn as nn
 import pandas as pd
-
+from tqdm import tqdm
 
 class PlaysData(Dataset):
     variants_output_size = {1:5,2:1,3:3,4:5}
 
     def __init__(self, variant):
         self.v = variant
+        self.players = pd.read_csv("data/players.csv")
         self.player_play = pd.read_csv("data/player_play.csv")
         self.plays = pd.read_csv("data/plays.csv")
         self.tracking = []
@@ -57,14 +58,13 @@ class PlaysData(Dataset):
         self.data["qb_speed"] = []
         self.data["qb_direction"] = []
         self.data["qb_accel"] = []
-        self.data["qb_targetx"] = []
-        self.data["qb_targety"] = [] 
         self.data["qb_result"] = []
         for i in range(6):
             self.data[f"qb_pressure_{i}"] = []
-
+        
     def process_plays(self):
-        for week_df in self.tracking:
+        for week_df in tqdm(self.tracking):
+            week_df = week_df.merge(self.players[['nflId', 'position']], on='nflId', how='left')
             merged = week_df.merge(self.plays, on=['gameId', 'playId'], how='inner')
 
             for (gameId, playId), play_df in merged.groupby(['gameId', 'playId']):
@@ -90,25 +90,9 @@ class PlaysData(Dataset):
                 self.data["qb_direction"].append(qb_snap['dir'])
                 self.data["qb_accel"].append(qb_snap['a'])
 
-                target_row = play_players[play_players['isTarget'] == True]
-                if not target_row.empty:
-                    target_id = target_row.iloc[0]['nflId']
-                    target_data = play_df[play_df['nflId'] == target_id].sort_values('frameId')
-                    if not target_data.empty:
-                        target_snap = target_data.iloc[0]
-                        self.data["qb_targetx"].append(target_snap['x'])
-                        self.data["qb_targety"].append(target_snap['y'])
-                    else:
-                        self.data["qb_targetx"].append(None)
-                        self.data["qb_targety"].append(None)
-                else:
-                    self.data["qb_targetx"].append(None)
-                    self.data["qb_targety"].append(None)
+                self.data["qb_result"].append(play_info['passResult'])
 
-                result = play_info['passResult'].values
-                self.data["qb_result"].append(result[0] if len(result) > 0 else None)
-
-                receivers = play_players[play_players['route'].notna()].head(5)
+                receivers = play_players[play_players['routeRan'].notna()].head(5)
                 for i in range(5):
                     if i < len(receivers):
                         r = receivers.iloc[i]
@@ -123,7 +107,7 @@ class PlaysData(Dataset):
                             self.data[f"orientation_{i}"].append(r_snap['o'])
                             dist = ((r_snap['x'] - qb_snap['x']) ** 2 + (r_snap['y'] - qb_snap['y']) ** 2) ** 0.5
                             self.data[f"dist_qb_{i}"].append(dist)
-                            self.data[f"receiver_type_{i}"].append(r['route'])
+                            self.data[f"receiver_type_{i}"].append(play_df['position'])
 
                             defenders = play_df[play_df['position'].isin(['CB', 'S', 'LB', 'FS', 'SS', 'DE', 'DT'])]
                             defenders['dist'] = ((defenders['x'] - r_snap['x']) ** 2 +
