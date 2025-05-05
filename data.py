@@ -21,7 +21,7 @@ class PlaysData(Dataset):
         self.initializing_df_data()
         self.process_plays()
 
-        pd.DataFrame.from_dict(self.data)
+        self.data = pd.DataFrame.from_dict(self.data)
         self.converting_numerical()
         
 
@@ -181,7 +181,7 @@ class PlaysData(Dataset):
                     self.data["result"].append(play_df["dis"])
                 elif self.v == 3:
                     self.data["result"].append(play_info["passResult"])
-
+                print(self.data)
     def sorting_receivers(self, play_df, ball_snap_frame):
         snap_frame = play_df[play_df['frameId'] == ball_snap_frame]
         receiver_positions = snap_frame[snap_frame['nflId'].isin(self.receivers['nflId'])][['nflId', 'y']]
@@ -201,7 +201,7 @@ class PlaysData(Dataset):
         pass
 
     def get_csv(self):
-        self.data.to_csv("final_data.csv", index=False)
+        self.data.to_csv("/final_data.csv", index=False)
 
 
 
