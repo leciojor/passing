@@ -7,22 +7,25 @@ from tqdm import tqdm
 class PlaysData(Dataset):
     variants_output_size = {1:5,2:1,3:3,4:5}
 
-    def __init__(self, variant):
-        self.v = variant
-        self.players = pd.read_csv("data/players.csv")
-        self.player_play = pd.read_csv("data/player_play.csv")
-        self.plays = pd.read_csv("data/plays.csv")
-        self.tracking = []
-        for i in range(1, 10):
-            self.tracking.append(pd.read_csv(f"data/tracking_week_{i}.csv"))
-        
-        self.data = {}
+    def __init__(self, variant, data=None):
+        if data is None:
+            self.v = variant
+            self.players = pd.read_csv("data/players.csv")
+            self.player_play = pd.read_csv("data/player_play.csv")
+            self.plays = pd.read_csv("data/plays.csv")
+            self.tracking = []
+            for i in range(1, 10):
+                self.tracking.append(pd.read_csv(f"data/tracking_week_{i}.csv"))
+            
+            self.data = {}
 
-        self.initializing_df_data()
-        self.process_plays()
+            self.initializing_df_data()
+            self.process_plays()
 
-        self.data = pd.DataFrame.from_dict(self.data)
-        self.converting_numerical()
+            self.data = pd.DataFrame.from_dict(self.data)
+            self.converting_numerical()
+        else:
+            self.data = data
         
 
     def __len__(self):
@@ -181,7 +184,7 @@ class PlaysData(Dataset):
                     self.data["result"].append(play_df["dis"])
                 elif self.v == 3:
                     self.data["result"].append(play_info["passResult"])
-                print(self.data)
+
     def sorting_receivers(self, play_df, ball_snap_frame):
         snap_frame = play_df[play_df['frameId'] == ball_snap_frame]
         receiver_positions = snap_frame[snap_frame['nflId'].isin(self.receivers['nflId'])][['nflId', 'y']]
@@ -194,14 +197,19 @@ class PlaysData(Dataset):
     def converting_numerical(self):
         pass
 
+    def cleaning(self):
+        self.data.dropna(subset=['result'], inplace=True)
+
     def correlation_analysis(self):
         pass
     
     def augmentation(self):
         pass
 
-    def get_csv(self):
-        self.data.to_csv("/final_data.csv", index=False)
+    def get_csv(self, name=False):
+        if not name:
+            name = f"./final_data_variant{self.v}.csv"
+        self.data.to_csv(name, index=False)
 
 
 

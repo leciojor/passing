@@ -1,14 +1,27 @@
 
 from data import PlaysData
 from torch.utils.data import DataLoader, Subset
+import pandas as pd
 
-def getting_loader(batch_size, display=False, num_workers=2, variant = 1, train_p=0.7):
-    dataset = PlaysData(variant)
-    if display:
-        dataset.get_csv()
+def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False):
+    if not saved:
+        dataset = PlaysData(variant)
+        if save:
+            dataset.get_csv()
+
+    else:
+        dataset = PlaysData(variant, pd.read_csv(f"final_data_variant{variant}.csv"))
 
     n = len(dataset)
-    train_amount = n*train_p
+
+    print(f"**BEFORE CLEANING** Dataset size: {n}")
+    dataset.cleaning()
+    if save:
+        dataset.get_csv(name = f"./final_data_variant{variant}_cleaned.csv")
+    n_clean = len(dataset)
+    print(f"**AFTER CLEANING** Dataset size: {n_clean}")
+    
+    train_amount = int(n*train_p)
     train_indices = list(range(train_amount + 1))
     val_indices = list(range(train_amount + 1, n))
 
@@ -23,5 +36,5 @@ def getting_loader(batch_size, display=False, num_workers=2, variant = 1, train_
 def train():
     pass
 
-getting_loader(32, True)
+getting_loader(32, True, saved=True)
 
