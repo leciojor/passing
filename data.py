@@ -193,19 +193,21 @@ class PlaysData(Dataset):
 
         self.receivers = self.receivers.sort_values(by='y', ascending=True).head(5)
         
-
     def converting_numerical(self):
-        result = self.data.copy()
+        result = []
 
         for col in self.data.columns:
-            if not pd.api.types.is_integer_dtype(self.data[col]):
+            if pd.api.types.is_integer_dtype(self.data[col]):
+                result.append(self.data[col])
+            else:
                 one_hot = pd.get_dummies(self.data[col], prefix=col)
-                result = result.drop(columns=[col])  
-                result = pd.concat([result, one_hot], axis=1)
+                for col_new in one_hot.columns:
+                    result.append(one_hot[col_new])
+
+        self.data = pd.concat(result, axis=1)  
+            
 
         self.data = result
-
-
 
     def cleaning(self):
         self.data.dropna(subset=['result'], inplace=True)
