@@ -16,11 +16,12 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
 
     print(f"**BEFORE CLEANING** Dataset size: {n}")
     dataset.cleaning()
+    dataset.converting_numerical()
     if save:
         dataset.get_csv(name = f"./final_data_variant{variant}_cleaned.csv")
     n_clean = len(dataset)
     print(f"**AFTER CLEANING** Dataset size: {n_clean}")
-    
+
     train_amount = int(n*train_p)
     train_indices = list(range(train_amount + 1))
     val_indices = list(range(train_amount + 1, n))

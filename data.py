@@ -195,10 +195,21 @@ class PlaysData(Dataset):
         
 
     def converting_numerical(self):
-        pass
+        result = self.data.copy()
+
+        for col in self.data.columns:
+            if not pd.api.types.is_integer_dtype(self.data[col]):
+                one_hot = pd.get_dummies(self.data[col], prefix=col)
+                result = result.drop(columns=[col])  
+                result = pd.concat([result, one_hot], axis=1)
+
+        self.data = result
+
+
 
     def cleaning(self):
         self.data.dropna(subset=['result'], inplace=True)
+        #maybe also normalizing values?
 
     def correlation_analysis(self):
         pass
