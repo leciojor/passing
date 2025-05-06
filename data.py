@@ -196,7 +196,7 @@ class PlaysData(Dataset):
     def converting_numerical(self):
         result = []
 
-        for col in self.data.columns:
+        for col in tqdm(self.data.columns):
             if pd.api.types.is_integer_dtype(self.data[col]):
                 result.append(self.data[col])
             else:

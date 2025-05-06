@@ -2,6 +2,14 @@
 from data import PlaysData
 from torch.utils.data import DataLoader, Subset
 import pandas as pd
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+if torch.cuda.is_available():
+  DEVICE = torch.device("cuda")
+else:
+  DEVICE = torch.device("cpu")
 
 def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False):
     if not saved:
@@ -34,8 +42,55 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
 
     return train_loader, val_loader
     
-def train():
-    pass
+def train(net, optimizer, loss_f, train_dataloader, val_dataloader, n_minibatch_steps, log_interval, val_interval, scheduler, version, pretrained=False):
+  try:
+    loss_training = []
+    loss_val = []
+    acc_training = []
+    acc_val = []
+
+    net.to(DEVICE)
+    i = 0
+    while i < n_minibatch_steps:
+      for x,y in train_dataloader:
+        x = x.to(DEVICE)
+        y = y.to(DEVICE)
+        y_hat = net(x)
+        L = loss_f(y_hat, y)
+        acc = get_acc(y_hat.float(), y)
+
+        L.backward()
+        optimizer.step()
+
+        i += 1
+        optimizer.zero_grad()
+        if not i % log_interval:
+          print(f"LOSS: {L.item()} ACCURACY: {acc}")
+          loss_training.append(L.item())
+          acc_training.append(acc)
+
+        if not i % val_interval:
+          loss_v, accs_v = get_val(net, val_dataloader, loss_f, pretrained)
+          print(f"VAL LOSS: {loss_v} VAL ACCURACY: {accs_v}")
+          acc_val.append(accs_v)
+          loss_val.append(loss_v)
+
+        if n_minibatch_steps < i + 1:
+            break
+
+      if scheduler:
+          scheduler.step()
+      torch.cuda.empty_cache()
+    print('Saving model...')
+    torch.save(net.state_dict(), f"./models/model_{version}.pkl")
+
+    return loss_training, acc_training, loss_val, acc_val
+
+  except KeyboardInterrupt:
+    print('Saving model...')
+    torch.save(net.state_dict(), f"./models/model_{version}.pkl")
+
+    return loss_training, acc_training, loss_val, acc_val
 
 getting_loader(32, True, saved=True)
 
