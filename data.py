@@ -206,9 +206,6 @@ class PlaysData(Dataset):
 
         self.data = pd.concat(result, axis=1)  
             
-
-        self.data = result
-
     def cleaning(self):
         self.data.dropna(subset=['result'], inplace=True)
         #maybe also normalizing values?
