@@ -57,7 +57,7 @@ def train(net, optimizer, loss_f, train_dataloader, val_dataloader, n_minibatch_
         y = y.to(DEVICE)
         y_hat = net(x)
         L = loss_f(y_hat, y)
-        acc = get_acc(y_hat.float(), y)
+        acc = get_acc(y_hat, y)
 
         L.backward()
         optimizer.step()
@@ -92,5 +92,5 @@ def train(net, optimizer, loss_f, train_dataloader, val_dataloader, n_minibatch_
 
     return loss_training, acc_training, loss_val, acc_val
 
-getting_loader(32, True, saved=True)
+getting_loader(32, True, saved=False)
 

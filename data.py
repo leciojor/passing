@@ -23,7 +23,6 @@ class PlaysData(Dataset):
             self.process_plays()
 
             self.data = pd.DataFrame.from_dict(self.data)
-            self.converting_numerical()
         else:
             self.data = data
         
@@ -60,9 +59,10 @@ class PlaysData(Dataset):
         self.data["qb_speed"] = []
         self.data["qb_direction"] = []
         self.data["qb_accel"] = []
-        self.data["result"] = []
         for i in range(6):
             self.data[f"qb_pressure_{i}"] = []
+
+        self.data["result"] = []
         
     def process_plays(self):
         for week_df in tqdm(self.tracking):
@@ -197,10 +197,11 @@ class PlaysData(Dataset):
         result = []
 
         for col in tqdm(self.data.columns):
-            if pd.api.types.is_integer_dtype(self.data[col]):
-                result.append(self.data[col])
+            if pd.api.types.is_numeric_dtype(self.data[col]) and col != "result":
+                result.append(self.data[col].astype(float))
             else:
                 one_hot = pd.get_dummies(self.data[col], prefix=col)
+                one_hot = one_hot.astype(int)
                 for col_new in one_hot.columns:
                     result.append(one_hot[col_new])
 
