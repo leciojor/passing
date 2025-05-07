@@ -5,9 +5,11 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import matplotlib.pyplot as plt
 
 if torch.cuda.is_available():
   DEVICE = torch.device("cuda")
+  print("ROCm is working")
 else:
   DEVICE = torch.device("cpu")
 
@@ -92,5 +94,21 @@ def train(net, optimizer, loss_f, train_dataloader, val_dataloader, n_minibatch_
 
     return loss_training, acc_training, loss_val, acc_val
 
-getting_loader(32, True, saved=False)
 
+def plotting(version, loss_training, acc_training, loss_val, acc_val):
+  def plot_(title, results, ylabel, val=False):
+      plt.xlabel("Epochs")
+      if val:
+        plt.ylabel(f"Validation {ylabel}")
+      else:
+        plt.ylabel(f"Training {ylabel}")
+      plt.plot(results)
+      plt.legend()
+      plt.title(title)
+      plt.show()
+
+  plot_(f"Loss Training {version}", loss_training, "Loss")
+  plot_(f"Accuracy Training", acc_training, "Accuracy")
+  plot_(f"Loss Validation", loss_val, "Loss", val=True)
+  plot_(f"Accuracy Validation", acc_val, "Accuracy", val=True)
+      
