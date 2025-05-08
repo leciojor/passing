@@ -52,9 +52,8 @@ def get_acc(y_hat, y, t):
             preds = torch.argmax(probs, dim=1)
             inferences = (preds == y).float()
         else:  
-            probs = torch.sigmoid(y_hat)
-            preds = (probs >= 0.5).float()
-            inferences = (preds == y).float()
+            tolerance = 10.0
+            inferences = (torch.abs(y_hat - y) < tolerance).float()
 
     return torch.mean(inferences).item()
 
