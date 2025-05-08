@@ -27,6 +27,7 @@ class DeepQBVariant1(nn.Module):
         # Output layer -> 5 WR
         self.output_layer = nn.Linear(hidden_dim2, output_dim)
 
+
     def forward(self, x):
         # Hidden Layer 1
         x = self.fc1(x)
@@ -38,10 +39,9 @@ class DeepQBVariant1(nn.Module):
         x = F.relu(self.bn2(x))
         x = self.dropout2(x)
 
-        # softmax
         logits = self.output_layer(x)
-        probs = F.softmax(logits, dim=1)
-        return probs
+        # probs = F.softmax(logits, dim=1)
+        return logits
     
 
 # ---------------------------------------------------
@@ -123,7 +123,6 @@ class DeepQBVariant3(nn.Module):
         x = F.relu(self.bn2(x))
         x = self.dropout2(x)
 
-        # Softmax  0 - Completion, 1 - Incompletion, 2 - Interception
         logits = self.output_layer(x)
-        probs = F.softmax(logits, dim=1)
-        return probs
+        # probs = F.softmax(logits, dim=1)
+        return logits
