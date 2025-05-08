@@ -26,9 +26,11 @@ class PlaysData(Dataset):
         else:
             self.data = data
         
+        self.length = len(self.data)
+        
 
     def __len__(self):
-        return len(self.data)
+        return self.length
 
     def __getitem__(self, i):
         row = self.data.iloc[i]
@@ -221,6 +223,7 @@ class PlaysData(Dataset):
         self.data = self.data.apply(lambda col: col.fillna(col.mean()))
         
         self.data.reset_index(drop=True, inplace=True)
+        self.length = len(self.data)
 
         #maybe also normalizing values?
         

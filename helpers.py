@@ -32,7 +32,7 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
     n_clean = len(dataset)
     print(f"**AFTER CLEANING** Dataset size: {n_clean}")
 
-    train_amount = int(n*train_p)
+    train_amount = int(n_clean*train_p)
     train_indices = list(range(train_amount + 1))
     val_indices = list(range(train_amount + 1, n))
 
