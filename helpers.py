@@ -43,8 +43,36 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
     val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=num_workers)
 
     return train_loader, val_loader
-    
-def train(net, optimizer, loss_f, train_dataloader, val_dataloader, n_minibatch_steps, log_interval, val_interval, scheduler, version, pretrained=False):
+
+
+def get_acc(y_hat, y, t):
+  with torch.no_grad():
+    if t == 1 or t == 4 or t == 3:
+      probs = nn.Softmax(y_hat)
+    else:
+      probs = torch.sigmoid(y_hat)
+    preds = (probs >= 0.5).float()
+    inferences = (preds == y).float()
+  return torch.mean(inferences).item()  
+
+def get_val(net, val_dataloader, loss_f, t):
+  losses = []
+  accs = []
+  net.to(DEVICE)
+  net.eval()
+  with torch.no_grad():
+    for x,y in val_dataloader:
+      x = x.to(DEVICE)
+      y = y.to(DEVICE)
+      y_hat = net(x)
+      L = loss_f(y_hat, y)
+      acc = get_acc(y_hat, y, t)
+      accs.append(acc)
+      losses.append(L.item())
+    net.train()
+    return sum(losses) / len(losses), sum(accs) / len(accs)
+
+def train(net, optimizer, loss_f, train_dataloader, val_dataloader, n_minibatch_steps, log_interval, val_interval, scheduler, version, t=1, pretrained=False):
   try:
     loss_training = []
     loss_val = []
@@ -59,7 +87,7 @@ def train(net, optimizer, loss_f, train_dataloader, val_dataloader, n_minibatch_
         y = y.to(DEVICE)
         y_hat = net(x)
         L = loss_f(y_hat, y)
-        acc = get_acc(y_hat, y)
+        acc = get_acc(y_hat, y, t)
 
         L.backward()
         optimizer.step()
@@ -72,7 +100,7 @@ def train(net, optimizer, loss_f, train_dataloader, val_dataloader, n_minibatch_
           acc_training.append(acc)
 
         if not i % val_interval:
-          loss_v, accs_v = get_val(net, val_dataloader, loss_f, pretrained)
+          loss_v, accs_v = get_val(net, val_dataloader, loss_f, t)
           print(f"VAL LOSS: {loss_v} VAL ACCURACY: {accs_v}")
           acc_val.append(accs_v)
           loss_val.append(loss_v)
