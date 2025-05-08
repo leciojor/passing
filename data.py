@@ -1,13 +1,15 @@
 from torch.utils.data import Dataset
+import torch
 import pandas as pd
 from tqdm import tqdm
+import numpy as np
 
 class PlaysData(Dataset):
     variants_output_size = {1:5,2:1,3:3,4:5}
 
     def __init__(self, variant, data=None):
+        self.v = variant
         if data is None:
-            self.v = variant
             self.players = pd.read_csv("data/players.csv")
             self.player_play = pd.read_csv("data/player_play.csv")
             self.plays = pd.read_csv("data/plays.csv")
@@ -30,7 +32,7 @@ class PlaysData(Dataset):
 
     def __getitem__(self, i):
         row = self.data.iloc[i]
-        return row[:PlaysData.variants_output_size[self.v]], row[:PlaysData.variants_output_size[self.v]:]
+        return torch.tensor(row.iloc[PlaysData.variants_output_size[self.v]:].values, dtype=torch.float32), torch.tensor(row.iloc[:PlaysData.variants_output_size[self.v]].values, dtype=torch.float32)
 
     def __str__(self):
         return self.data
@@ -191,7 +193,7 @@ class PlaysData(Dataset):
 
         self.receivers = self.receivers.sort_values(by='y', ascending=True).head(5)
         
-    def converting_numerical(self):
+    def converting_numerical(self, r=False):
         result = []
 
         for col in tqdm(self.data.columns):
@@ -204,9 +206,18 @@ class PlaysData(Dataset):
                     result.append(one_hot[col_new])
 
         self.data = pd.concat(result, axis=1)  
+        self.data = self.data.astype("float")
+        if r:
+            def round_(x):
+                if isinstance(x, (int, float, np.number)) and x != 0:
+                    return round(x, 3)
+                return x 
+            self.data = self.data.applymap(round_)
+
             
     def cleaning(self):
         self.data.dropna(subset=['result'], inplace=True)
+        self.data.reset_index(drop=True, inplace=True)
         #maybe also normalizing values?
 
     def correlation_analysis(self):

@@ -49,9 +49,9 @@ def get_acc(y_hat, y, t):
   with torch.no_grad():
     if t == 1 or t == 4 or t == 3:
       probs = nn.Softmax(y_hat)
+      preds = (probs >= 0.5).float()
     else:
-      probs = torch.sigmoid(y_hat)
-    preds = (probs >= 0.5).float()
+      preds = y_hat.float()
     inferences = (preds == y).float()
   return torch.mean(inferences).item()  
 
