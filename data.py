@@ -193,9 +193,12 @@ class PlaysData(Dataset):
 
         self.receivers = self.receivers.sort_values(by='y', ascending=True).head(5)
         
-    def converting_numerical(self, r=False):
+    def converting_numerical_and_cleaning(self, r=False):
         result = []
 
+        #removing initial nans (just based on result)
+        self.data.dropna(subset=['result'], inplace=True)
+        
         for col in tqdm(self.data.columns):
             if pd.api.types.is_numeric_dtype(self.data[col]) and col != "result":
                 result.append(self.data[col].astype(float))
@@ -213,12 +216,19 @@ class PlaysData(Dataset):
                     return round(x, 3)
                 return x 
             self.data = self.data.applymap(round_)
-
-            
-    def cleaning(self):
-        self.data.dropna(subset=['result'], inplace=True)
+        
+        #filling the rest of nans with the average
+        self.data = self.data.apply(lambda col: col.fillna(col.mean()))
+        
         self.data.reset_index(drop=True, inplace=True)
+
         #maybe also normalizing values?
+        
+    def check_nan_features(self):
+        nan_columns = self.data.columns[self.data.isna().any()].tolist()
+        for col in nan_columns:
+            nan_count = self.data[col].isna().sum()
+            print(f"{col}: {nan_count} NaNs")
 
     def correlation_analysis(self):
         pass
