@@ -46,14 +46,17 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
 
 
 def get_acc(y_hat, y, t):
-  with torch.no_grad():
-    if t == 1 or t == 4 or t == 3:
-      probs = nn.Softmax(y_hat)
-      preds = (probs >= 0.5).float()
-    else:
-      preds = y_hat.float()
-    inferences = (preds == y).float()
-  return torch.mean(inferences).item()  
+    with torch.no_grad():
+        if t in {1, 3, 4}:  
+            probs = torch.softmax(y_hat, dim=1)
+            preds = torch.argmax(probs, dim=1)
+            inferences = (preds == y).float()
+        else:  
+            probs = torch.sigmoid(y_hat)
+            preds = (probs >= 0.5).float()
+            inferences = (preds == y).float()
+
+    return torch.mean(inferences).item()
 
 def get_val(net, val_dataloader, loss_f, t):
   losses = []
