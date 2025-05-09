@@ -13,7 +13,7 @@ if torch.cuda.is_available():
 else:
   DEVICE = torch.device("cpu")
 
-def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False):
+def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False):
     if not saved:
         dataset = PlaysData(variant)
         if save:
@@ -25,15 +25,14 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
     n = len(dataset)
 
     print(f"**BEFORE CLEANING** Dataset size: {n}")
-    dataset.cleaning()
-    dataset.converting_numerical()
+    dataset.converting_numerical_and_cleaning()
     if save:
         dataset.get_csv(name = f"./final_data_variant{variant}_cleaned.csv")
     n_clean = len(dataset)
     print(f"**AFTER CLEANING** Dataset size: {n_clean}")
 
     if drop_qb_orientation:
-       dataset.data.drop("qb_orientation", axis=1)
+       dataset.data = dataset.data.drop("qb_orientation", axis=1)
 
     train_amount = int(n_clean*train_p)
     train_indices = list(range(train_amount + 1))
@@ -45,7 +44,9 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=num_workers)
 
-    return train_loader, val_loader
+    if get_dataset:
+      return train_loader, val_loader, dataset
+    return dataset
 
 
 def get_acc(y_hat, y, t):
