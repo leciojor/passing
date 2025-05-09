@@ -13,7 +13,7 @@ if torch.cuda.is_available():
 else:
   DEVICE = torch.device("cpu")
 
-def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False):
+def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False):
     if not saved:
         dataset = PlaysData(variant)
         if save:
@@ -31,6 +31,9 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
         dataset.get_csv(name = f"./final_data_variant{variant}_cleaned.csv")
     n_clean = len(dataset)
     print(f"**AFTER CLEANING** Dataset size: {n_clean}")
+
+    if drop_qb_orientation:
+       dataset.data.drop("qb_orientation", axis=1)
 
     train_amount = int(n_clean*train_p)
     train_indices = list(range(train_amount + 1))
