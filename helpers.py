@@ -46,7 +46,7 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
 
     if get_dataset:
       return train_loader, val_loader, dataset
-    return dataset
+    return train_loader, val_loader
 
 
 def get_acc(y_hat, y, t):
