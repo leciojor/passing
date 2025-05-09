@@ -52,7 +52,6 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
 def get_acc(y_hat, y, t):
     with torch.no_grad():
         if t in {1, 3, 4}:
-            y = torch.softmax(y,dim=1)
             y = torch.argmax(y, dim=1)
             probs = torch.softmax(y_hat, dim=1)
             preds = torch.argmax(probs, dim=1)
