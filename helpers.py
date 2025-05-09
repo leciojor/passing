@@ -33,6 +33,7 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
 
     if drop_qb_orientation:
        dataset.data = dataset.data.drop("qb_orientation", axis=1)
+       dataset.col_size = dataset.data.shape[1]
 
     train_amount = int(n_clean*train_p)
     train_indices = list(range(train_amount + 1))

@@ -27,6 +27,7 @@ class PlaysData(Dataset):
             self.data = data
         
         self.length = len(self.data)
+        self.col_size = self.data.shape[1]
         
 
     def __len__(self):
@@ -34,7 +35,7 @@ class PlaysData(Dataset):
 
     def __getitem__(self, i):
         row = self.data.iloc[i]
-        return torch.tensor(row.iloc[PlaysData.variants_output_size[self.v]:].values, dtype=torch.float32), torch.tensor(row.iloc[:PlaysData.variants_output_size[self.v]].values, dtype=torch.float32)
+        return torch.tensor(row.iloc[:self.col_size-PlaysData.variants_output_size[self.v]].values, dtype=torch.float32), torch.tensor(row.iloc[self.col_size-PlaysData.variants_output_size[self.v]:].values, dtype=torch.float32)
 
     def __str__(self):
         return self.data
