@@ -226,6 +226,8 @@ class PlaysData(Dataset):
         self.data.reset_index(drop=True, inplace=True)
         self.length = len(self.data)
 
+        self.col_size = self.data.shape[1]
+
         #maybe also normalizing values?
         
     def check_nan_features(self):
