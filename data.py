@@ -203,7 +203,7 @@ class PlaysData(Dataset):
         self.data.dropna(subset=['result'], inplace=True)
         
         for col in tqdm(self.data.columns):
-            if pd.api.types.is_numeric_dtype(self.data[col]) and col != "result":
+            if pd.api.types.is_numeric_dtype(self.data[col]) and (col != "result" or self.v == 2):
                 result.append(self.data[col].astype(float))
             else:
                 one_hot = pd.get_dummies(self.data[col], prefix=col)
