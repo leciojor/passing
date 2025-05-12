@@ -180,13 +180,13 @@ class PlaysData(Dataset):
                 self.data["qb_pressure_1"].append(time_to_sack or 0)
                 self.data["qb_pressure_2"].append(caused_pressure)
                 self.data["qb_pressure_5"].append(time_to_pressure or 0)
-
                 if self.v == 1 or self.v == 4:
                     self.data["result"].append(targetedReceiver)
                 elif self.v == 2:
-                    self.data["result"].append(play_df["dis"])
+                    play_row = play_df[(play_df["gameId"] == gameId) & (play_df['playId'] == playId)]
+                    self.data["result"].append(play_row['dis'].sum())
                 elif self.v == 3:
-                    self.data["result"].append(play_info["passResult"])
+                    self.data["result"].append(play_info.iloc[0]['passResult'])
 
     def sorting_receivers(self, play_df, ball_snap_frame):
         snap_frame = play_df[play_df['frameId'] == ball_snap_frame]
