@@ -112,7 +112,7 @@ class PlaysData(Dataset):
                         if i < len(self.receivers):
                             r = self.receivers.iloc[i]
                             rid = r['nflId']
-                            r_data = play_df[play_df['nflId'] == rid & play_df["frameId"] == ball_frame]
+                            r_data = play_df[(play_df['nflId'] == rid) & (play_df["frameId"] == ball_frame)]
                             if not r_data.empty:
                                 r_snap = r_data.iloc[0]
                                 self.data[f"x_{i}"].append(r_snap['x'])
@@ -159,7 +159,7 @@ class PlaysData(Dataset):
                     amount_causing_pressure = 0
 
                     for player in play_players.itertuples():
-                        if player["causedPressure"]:
+                        if player.causedPressure:
                             amount_causing_pressure += 1
 
                     self.data["amount_of_players_causing_pressure_on_qb_during_snap"].append(amount_causing_pressure)
@@ -228,7 +228,7 @@ class PlaysData(Dataset):
 
     def get_csv(self, name=False):
         if not name:
-            name = f"./final_data_variant{self.v}.csv"
+            name = f"./finalFeatures/final_data_variant{self.v}.csv"
         self.data.to_csv(name, index=False)
 
 
