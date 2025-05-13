@@ -27,7 +27,7 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
     print(f"**BEFORE CLEANING** Dataset size: {n}")
     dataset.converting_numerical_and_cleaning()
     if save:
-        dataset.get_csv(name = f"./final_data_variant{variant}_cleaned.csv")
+        dataset.get_csv(name = f"./finalFeatures/final_data_variant{variant}_cleaned.csv")
     n_clean = len(dataset)
     print(f"**AFTER CLEANING** Dataset size: {n_clean}")
 
