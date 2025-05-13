@@ -62,16 +62,17 @@ class PlaysData(Dataset):
         self.data["qb_speed"] = []
         self.data["qb_direction"] = []
         self.data["qb_accel"] = []
-        for i in range(6):
-            self.data[f"qb_pressure_{i}"] = []
+        self.data["amount_of_players_causing_pressure_on_qb_during_snap"] = []
 
         self.data["result"] = []
         
     def process_plays(self):
+        #iteration over all tracking... csvs
         for week_df in tqdm(self.tracking):
             week_df = week_df.merge(self.players[['nflId', 'position']], on='nflId', how='left')
             merged = week_df.merge(self.plays, on=['gameId', 'playId'], how='inner')
 
+            #iteration over all plays 
             for (gameId, playId), play_df in merged.groupby(['gameId', 'playId']):
                 play_players = self.player_play[
                     (self.player_play['gameId'] == gameId) &
@@ -85,54 +86,67 @@ class PlaysData(Dataset):
                 qb_data = play_df[play_df['position'] == 'QB']
                 if qb_data.empty:
                     continue
-                qb_snap = qb_data.sort_values('frameId').iloc[0]
-                ball_snap_frame = qb_snap['frameId']
+                amount_of_qb_frames = len(qb_data)
 
-                self.data["qb_x"].append(qb_snap['x'])
-                self.data["qb_y"].append(qb_snap['y'])
-                self.data["qb_orientation"].append(qb_snap['o'])
-                self.data["qb_speed"].append(qb_snap['s'])
-                self.data["qb_direction"].append(qb_snap['dir'])
-                self.data["qb_accel"].append(qb_snap['a'])
-                
-                targetedReceiver = None
-                self.receivers = play_players[play_players['routeRan'].notna()].copy()
-                # May need to be optimized
-                self.receivers = self.receivers.merge(self.players[['nflId', 'position']], on='nflId', how='left')
-                self.sorting_receivers(play_df, ball_snap_frame)
+                # iteration over play qb frames
+                for i in range(amount_of_qb_frames):
+                    qb_snap = qb_data.sort_values('frameId').iloc[i]
+                    ball_frame = qb_snap['frameId']
 
-                for i in range(5):
-                    if i < len(self.receivers):
-                        r = self.receivers.iloc[i]
-                        rid = r['nflId']
-                        r_data = play_df[play_df['nflId'] == rid].sort_values('frameId')
-                        if not r_data.empty:
-                            r_snap = r_data.iloc[0]
-                            self.data[f"x_{i}"].append(r_snap['x'])
-                            self.data[f"y_{i}"].append(r_snap['y'])
-                            self.data[f"vel_{i}"].append(r_snap['s'])
-                            self.data[f"accel_{i}"].append(r_snap['a'])
-                            self.data[f"orientation_{i}"].append(r_snap['o'])
-                            dist = ((r_snap['x'] - qb_snap['x']) ** 2 + (r_snap['y'] - qb_snap['y']) ** 2) ** 0.5
-                            self.data[f"dist_qb_{i}"].append(dist)
-                            self.data[f"receiver_type_{i}"].append(r['position'])
-                            if r["wasTargettedReceiver"]:
-                                targetedReceiver = i
+                    # getting qb features
+                    self.data["qb_x"].append(qb_snap['x'])
+                    self.data["qb_y"].append(qb_snap['y'])
+                    self.data["qb_orientation"].append(qb_snap['o'])
+                    self.data["qb_speed"].append(qb_snap['s'])
+                    self.data["qb_direction"].append(qb_snap['dir'])
+                    self.data["qb_accel"].append(qb_snap['a'])
+                    
+                    # getting receivers features
+                    targetedReceiver = None
+                    self.receivers = play_players[play_players['routeRan'].notna()].copy()
 
-                            defenders = play_df[play_df['position'].isin(['CB', 'S', 'LB', 'FS', 'SS', 'DE', 'DT'])].copy()
-                            defenders['dist'] = ((defenders['x'] - r_snap['x']) ** 2 +
-                                                (defenders['y'] - r_snap['y']) ** 2) ** 0.5
-                            closest = defenders.nsmallest(2, 'dist')
+                    self.receivers = self.receivers.merge(self.players[['nflId', 'position']], on='nflId', how='left')
+                    self.sorting_receivers(play_df, ball_frame)
 
-                            for j in range(2):
-                                if j < len(closest):
-                                    d = closest.iloc[j]
-                                    self.data[f"defensor_x_{i}_{j}"].append(d['x'])
-                                    self.data[f"defensor_y_{i}_{j}"].append(d['y'])
-                                    self.data[f"defensor_vel_{i}_{j}"].append(d['s'])
-                                    self.data[f"defensor_accel_{i}_{j}"].append(d['a'])
-                                    self.data[f"defensor_orientation_{i}_{j}"].append(d['o'])
-                                else:
+                    for i in range(5):
+                        if i < len(self.receivers):
+                            r = self.receivers.iloc[i]
+                            rid = r['nflId']
+                            r_data = play_df[play_df['nflId'] == rid & play_df["frameId"] == ball_frame]
+                            if not r_data.empty:
+                                r_snap = r_data.iloc[0]
+                                self.data[f"x_{i}"].append(r_snap['x'])
+                                self.data[f"y_{i}"].append(r_snap['y'])
+                                self.data[f"vel_{i}"].append(r_snap['s'])
+                                self.data[f"accel_{i}"].append(r_snap['a'])
+                                self.data[f"orientation_{i}"].append(r_snap['o'])
+                                dist = ((r_snap['x'] - qb_snap['x']) ** 2 + (r_snap['y'] - qb_snap['y']) ** 2) ** 0.5
+                                self.data[f"dist_qb_{i}"].append(dist)
+                                self.data[f"receiver_type_{i}"].append(r['position'])
+                                if r["wasTargettedReceiver"]:
+                                    targetedReceiver = i
+
+                                # getting defenders features
+                                defenders = play_df[play_df['position'].isin(['CB', 'S', 'LB', 'FS', 'SS', 'DE', 'DT'])].copy()
+                                defenders['dist'] = ((defenders['x'] - r_snap['x']) ** 2 +
+                                                    (defenders['y'] - r_snap['y']) ** 2) ** 0.5
+                                closest = defenders.nsmallest(2, 'dist')
+
+                                for j in range(2):
+                                    if j < len(closest):
+                                        d = closest.iloc[j]
+                                        self.data[f"defensor_x_{i}_{j}"].append(d['x'])
+                                        self.data[f"defensor_y_{i}_{j}"].append(d['y'])
+                                        self.data[f"defensor_vel_{i}_{j}"].append(d['s'])
+                                        self.data[f"defensor_accel_{i}_{j}"].append(d['a'])
+                                        self.data[f"defensor_orientation_{i}_{j}"].append(d['o'])
+                                    else:
+                                        for field in ['x', 'y', 'vel', 'accel', 'orientation']:
+                                            self.data[f"defensor_{field}_{i}_{j}"].append(None)
+                            else:
+                                for field in ['x', 'y', 'vel', 'accel', 'orientation', 'dist_qb', 'receiver_type']:
+                                    self.data[f"{field}_{i}"].append(None)
+                                for j in range(2):
                                     for field in ['x', 'y', 'vel', 'accel', 'orientation']:
                                         self.data[f"defensor_{field}_{i}_{j}"].append(None)
                         else:
@@ -141,56 +155,26 @@ class PlaysData(Dataset):
                             for j in range(2):
                                 for field in ['x', 'y', 'vel', 'accel', 'orientation']:
                                     self.data[f"defensor_{field}_{i}_{j}"].append(None)
-                    else:
-                        for field in ['x', 'y', 'vel', 'accel', 'orientation', 'dist_qb', 'receiver_type']:
-                            self.data[f"{field}_{i}"].append(None)
-                        for j in range(2):
-                            for field in ['x', 'y', 'vel', 'accel', 'orientation']:
-                                self.data[f"defensor_{field}_{i}_{j}"].append(None)
 
-                self.data["qb_pressure_3"].append(ball_snap_frame) 
-                qb_sack = 1 if not play_info.empty and play_info.iloc[0]['passResult'] == 'Sack' else 0
-                self.data["qb_pressure_4"].append(qb_sack)
+                    amount_causing_pressure = 0
 
-                time_to_sack = None
-                time_to_pressure = None
-                caused_pressure = 0
-                unblocked = 0 
+                    for player in play_players.itertuples():
+                        if player["causedPressure"]:
+                            amount_causing_pressure += 1
 
-                near_qb = play_df[
-                    (play_df['frameId'] >= ball_snap_frame) &
-                    (play_df['frameId'] <= ball_snap_frame + 20) &
-                    (play_df['position'].isin(['LB', 'CB', 'S', 'FS', 'SS', 'DE', 'DT']))
-                ]
+                    self.data["amount_of_players_causing_pressure_on_qb_during_snap"].append(amount_causing_pressure)
 
-                for frame_id in sorted(near_qb['frameId'].unique()):
-                    frame = near_qb[near_qb['frameId'] == frame_id]
-                    for _, defender in frame.iterrows():
-                        dist = ((defender['x'] - qb_snap['x']) ** 2 + (defender['y'] - qb_snap['y']) ** 2) ** 0.5
-                        if dist < 2:
-                            if time_to_pressure is None:
-                                time_to_pressure = (frame_id - ball_snap_frame) / 10.0
-                                caused_pressure = 1
+                    if self.v == 1 or self.v == 4:
+                        self.data["result"].append(targetedReceiver)
+                    elif self.v == 2:
+                        play_row = play_df[(play_df["gameId"] == gameId) & (play_df['playId'] == playId)]
+                        self.data["result"].append(play_row['dis'].sum())
+                    elif self.v == 3:
+                        self.data["result"].append(play_info.iloc[0]['passResult'])
 
-                if qb_sack:
-                    last_frame = qb_data['frameId'].max()
-                    time_to_sack = (last_frame - ball_snap_frame) / 10.0
-
-                self.data["qb_pressure_0"].append(unblocked)
-                self.data["qb_pressure_1"].append(time_to_sack or 0)
-                self.data["qb_pressure_2"].append(caused_pressure)
-                self.data["qb_pressure_5"].append(time_to_pressure or 0)
-                if self.v == 1 or self.v == 4:
-                    self.data["result"].append(targetedReceiver)
-                elif self.v == 2:
-                    play_row = play_df[(play_df["gameId"] == gameId) & (play_df['playId'] == playId)]
-                    self.data["result"].append(play_row['dis'].sum())
-                elif self.v == 3:
-                    self.data["result"].append(play_info.iloc[0]['passResult'])
-
-    def sorting_receivers(self, play_df, ball_snap_frame):
-        snap_frame = play_df[play_df['frameId'] == ball_snap_frame]
-        receiver_positions = snap_frame[snap_frame['nflId'].isin(self.receivers['nflId'])][['nflId', 'y']]
+    def sorting_receivers(self, play_df, ball_frame):
+        frame = play_df[play_df['frameId'] == ball_frame]
+        receiver_positions = frame[frame['nflId'].isin(self.receivers['nflId'])][['nflId', 'y']]
 
         self.receivers = self.receivers.merge(receiver_positions, on='nflId', how='left')
 

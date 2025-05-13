@@ -148,6 +148,6 @@ def plotting(version, loss_training, acc_training, loss_val, acc_val):
   plot_(f"Loss Validation", loss_val, "Loss", val=True)
   plot_(f"Accuracy Validation", acc_val, "Accuracy", val=True)
 
-
-getting_loader(16, save=True, num_workers=0, variant = 2, train_p=0.8, saved=False, drop_qb_orientation=True)
-getting_loader(16, save=True, num_workers=0, variant = 3, train_p=0.8, saved=False, drop_qb_orientation=True)
+# getting_loader(16, save=True, num_workers=0, variant = 1, train_p=0.8, saved=False, drop_qb_orientation=True)
+# getting_loader(16, save=True, num_workers=0, variant = 2, train_p=0.8, saved=False, drop_qb_orientation=True)
+# getting_loader(16, save=True, num_workers=0, variant = 3, train_p=0.8, saved=False, drop_qb_orientation=True)
