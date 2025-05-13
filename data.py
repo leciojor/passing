@@ -68,6 +68,7 @@ class PlaysData(Dataset):
         
     def process_plays(self):
         #iteration over all tracking... csvs
+        week_df_i = 0
         for week_df in tqdm(self.tracking):
             week_df = week_df.merge(self.players[['nflId', 'position']], on='nflId', how='left')
             merged = week_df.merge(self.plays, on=['gameId', 'playId'], how='inner')
@@ -87,7 +88,6 @@ class PlaysData(Dataset):
                 if qb_data.empty:
                     continue
                 amount_of_qb_frames = len(qb_data)
-
                 # iteration over play qb frames
                 for i in range(amount_of_qb_frames):
                     qb_snap = qb_data.sort_values('frameId').iloc[i]
@@ -171,7 +171,7 @@ class PlaysData(Dataset):
                         self.data["result"].append(play_row['dis'].sum())
                     elif self.v == 3:
                         self.data["result"].append(play_info.iloc[0]['passResult'])
-
+        week_df_i += 1        
     def sorting_receivers(self, play_df, ball_frame):
         frame = play_df[play_df['frameId'] == ball_frame]
         receiver_positions = frame[frame['nflId'].isin(self.receivers['nflId'])][['nflId', 'y']]
