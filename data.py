@@ -63,7 +63,7 @@ class PlaysData(Dataset):
         self.data["qb_speed"] = []
         self.data["qb_direction"] = []
         self.data["qb_accel"] = []
-        self.data["amount_of_players_causing_pressure_on_qb_during_snap"] = []
+        self.data["amount_of_players_causing_pressure_on_qb"] = []
 
         self.data["result"] = []
         
@@ -171,7 +171,7 @@ class PlaysData(Dataset):
                         if player.causedPressure:
                             amount_causing_pressure += 1
 
-                    self.data["amount_of_players_causing_pressure_on_qb_during_snap"].append(amount_causing_pressure)
+                    self.data["amount_of_players_causing_pressure_on_qb"].append(amount_causing_pressure)
 
                     if self.v == 1 or self.v == 4:
                         self.data["result"].append(targetedReceiver)
