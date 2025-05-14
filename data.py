@@ -7,8 +7,9 @@ import numpy as np
 class PlaysData(Dataset):
     variants_output_size = {1:5,2:1,3:3,4:5}
 
-    def __init__(self, variant, data=None):
+    def __init__(self, variant, data=None, all=False):
         self.v = variant
+        self.all = all
         if data is None:
             self.players = pd.read_csv("data/players.csv")
             self.player_play = pd.read_csv("data/player_play.csv")
@@ -87,9 +88,17 @@ class PlaysData(Dataset):
                 qb_data = play_df[play_df['position'] == 'QB']
                 if qb_data.empty:
                     continue
-                amount_of_qb_frames = len(qb_data)
+                
+                if self.all: 
+                    amount_of_qb_frames = len(qb_data)
+                else:
+                    amount_of_qb_frames = 1
+                    
                 # iteration over play qb frames
                 for i in range(amount_of_qb_frames):
+                    if not self.all:
+                        i = -1
+
                     qb_snap = qb_data.sort_values('frameId').iloc[i]
                     ball_frame = qb_snap['frameId']
 
@@ -108,23 +117,23 @@ class PlaysData(Dataset):
                     self.receivers = self.receivers.merge(self.players[['nflId', 'position']], on='nflId', how='left')
                     self.sorting_receivers(play_df, ball_frame)
 
-                    for i in range(5):
-                        if i < len(self.receivers):
-                            r = self.receivers.iloc[i]
+                    for j in range(5):
+                        if j < len(self.receivers):
+                            r = self.receivers.iloc[j]
                             rid = r['nflId']
                             r_data = play_df[(play_df['nflId'] == rid) & (play_df["frameId"] == ball_frame)]
                             if not r_data.empty:
                                 r_snap = r_data.iloc[0]
-                                self.data[f"x_{i}"].append(r_snap['x'])
-                                self.data[f"y_{i}"].append(r_snap['y'])
-                                self.data[f"vel_{i}"].append(r_snap['s'])
-                                self.data[f"accel_{i}"].append(r_snap['a'])
-                                self.data[f"orientation_{i}"].append(r_snap['o'])
+                                self.data[f"x_{j}"].append(r_snap['x'])
+                                self.data[f"y_{j}"].append(r_snap['y'])
+                                self.data[f"vel_{j}"].append(r_snap['s'])
+                                self.data[f"accel_{j}"].append(r_snap['a'])
+                                self.data[f"orientation_{j}"].append(r_snap['o'])
                                 dist = ((r_snap['x'] - qb_snap['x']) ** 2 + (r_snap['y'] - qb_snap['y']) ** 2) ** 0.5
-                                self.data[f"dist_qb_{i}"].append(dist)
-                                self.data[f"receiver_type_{i}"].append(r['position'])
+                                self.data[f"dist_qb_{j}"].append(dist)
+                                self.data[f"receiver_type_{j}"].append(r['position'])
                                 if r["wasTargettedReceiver"]:
-                                    targetedReceiver = i
+                                    targetedReceiver = j
 
                                 # getting defenders features
                                 defenders = play_df[play_df['position'].isin(['CB', 'S', 'LB', 'FS', 'SS', 'DE', 'DT'])].copy()
@@ -132,29 +141,29 @@ class PlaysData(Dataset):
                                                     (defenders['y'] - r_snap['y']) ** 2) ** 0.5
                                 closest = defenders.nsmallest(2, 'dist')
 
-                                for j in range(2):
-                                    if j < len(closest):
-                                        d = closest.iloc[j]
-                                        self.data[f"defensor_x_{i}_{j}"].append(d['x'])
-                                        self.data[f"defensor_y_{i}_{j}"].append(d['y'])
-                                        self.data[f"defensor_vel_{i}_{j}"].append(d['s'])
-                                        self.data[f"defensor_accel_{i}_{j}"].append(d['a'])
-                                        self.data[f"defensor_orientation_{i}_{j}"].append(d['o'])
+                                for k in range(2):
+                                    if k < len(closest):
+                                        d = closest.iloc[k]
+                                        self.data[f"defensor_x_{j}_{k}"].append(d['x'])
+                                        self.data[f"defensor_y_{j}_{k}"].append(d['y'])
+                                        self.data[f"defensor_vel_{j}_{k}"].append(d['s'])
+                                        self.data[f"defensor_accel_{j}_{k}"].append(d['a'])
+                                        self.data[f"defensor_orientation_{j}_{k}"].append(d['o'])
                                     else:
                                         for field in ['x', 'y', 'vel', 'accel', 'orientation']:
-                                            self.data[f"defensor_{field}_{i}_{j}"].append(None)
+                                            self.data[f"defensor_{field}_{j}_{k}"].append(None)
                             else:
                                 for field in ['x', 'y', 'vel', 'accel', 'orientation', 'dist_qb', 'receiver_type']:
-                                    self.data[f"{field}_{i}"].append(None)
+                                    self.data[f"{field}_{k}"].append(None)
                                 for j in range(2):
                                     for field in ['x', 'y', 'vel', 'accel', 'orientation']:
-                                        self.data[f"defensor_{field}_{i}_{j}"].append(None)
+                                        self.data[f"defensor_{field}_{j}_{k}"].append(None)
                         else:
                             for field in ['x', 'y', 'vel', 'accel', 'orientation', 'dist_qb', 'receiver_type']:
-                                self.data[f"{field}_{i}"].append(None)
+                                self.data[f"{field}_{k}"].append(None)
                             for j in range(2):
                                 for field in ['x', 'y', 'vel', 'accel', 'orientation']:
-                                    self.data[f"defensor_{field}_{i}_{j}"].append(None)
+                                    self.data[f"defensor_{field}_{j}_{k}"].append(None)
 
                     amount_causing_pressure = 0
 
@@ -169,8 +178,20 @@ class PlaysData(Dataset):
                     elif self.v == 2:
                         play_row = play_df[(play_df["gameId"] == gameId) & (play_df['playId'] == playId)]
                         self.data["result"].append(play_row['dis'].sum())
-                    elif self.v == 3:
-                        self.data["result"].append(play_info.iloc[0]['passResult'])
+                    elif self.v == 3 or self.v == 5 or self.v == 6:
+                        pass_result = play_info.iloc[0]['passResult']
+                        if self.v == 5 or self.v == 3:
+                            if pass_result != "R" and pass_result != "S":
+                                self.data["result"].append(pass_result)
+                            else:
+                                self.data["result"].append(None)
+                        elif self.v == 6:
+                            if pass_result != "R" and pass_result != "S" and pass_result != "IN":
+                                self.data["result"].append(pass_result)
+                            else:
+                                self.data["result"].append(None)
+
+
         week_df_i += 1        
     def sorting_receivers(self, play_df, ball_frame):
         frame = play_df[play_df['frameId'] == ball_frame]

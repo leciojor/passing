@@ -13,14 +13,14 @@ if torch.cuda.is_available():
 else:
   DEVICE = torch.device("cpu")
 
-def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False):
+def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False):
     if not saved:
-        dataset = PlaysData(variant)
+        dataset = PlaysData(variant, all = all_frames)
         if save:
             dataset.get_csv()
 
     else:
-        dataset = PlaysData(variant, pd.read_csv(f"./finalFeatures/final_data_variant{variant}.csv"))
+        dataset = PlaysData(variant, pd.read_csv(f"./finalFeatures/final_data_variant{variant}.csv"), all = all_frames)
 
     n = len(dataset)
 
