@@ -186,10 +186,8 @@ class PlaysData(Dataset):
                             else:
                                 self.data["result"].append("I")
                         elif self.v == 6:
-                            if pass_result == "C":
-                                self.data["result"].append("C")
-                            elif pass_result == "In":
-                                self.data["result"].append("In")
+                            if pass_result == "C" or pass_result == "IN":
+                                self.data["result"].append(pass_result)
                             else:
                                 self.data["result"].append("I")
 
@@ -204,35 +202,32 @@ class PlaysData(Dataset):
         self.receivers = self.receivers.sort_values(by='y', ascending=True).head(5)
         
     def converting_numerical_and_cleaning(self, r=False):
-        result = []
+        result_parts = []
 
         #removing initial nans (just based on result)
-        self.data.dropna(subset=['result'], inplace=True)
+        self.data.dropna(subset=['result', 'x_0'], inplace=True)
         
         for col in tqdm(self.data.columns):
             if pd.api.types.is_numeric_dtype(self.data[col]) and (col != "result" or self.v == 2):
-                result.append(self.data[col].astype(float))
+                result_parts.append(self.data[[col]].astype(float))
             else:
-                one_hot = pd.get_dummies(self.data[col], prefix=col)
-                one_hot = one_hot.astype(int)
-                for col_new in one_hot.columns:
-                    result.append(one_hot[col_new])
+                dummies = pd.get_dummies(self.data[col], prefix=col)
+                result_parts.append(dummies)
 
-        self.data = pd.concat(result, axis=1)  
-        self.data = self.data.astype("float")
+        self.data = pd.concat(result_parts, axis=1)
+
+        #filling the rest of nans with the average
+        self.data.fillna(self.data.mean(), inplace=True)
+
         if r:
             def round_(x):
                 if isinstance(x, (int, float, np.number)) and x != 0:
                     return round(x, 3)
                 return x 
             self.data = self.data.applymap(round_)
-        
-        #filling the rest of nans with the average
-        self.data = self.data.apply(lambda col: col.fillna(col.mean()))
-        
+                
         self.data.reset_index(drop=True, inplace=True)
         self.length = len(self.data)
-
         self.col_size = self.data.shape[1]
 
         #maybe also normalizing values?
