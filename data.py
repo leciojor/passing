@@ -155,13 +155,13 @@ class PlaysData(Dataset):
                             else:
                                 for field in ['x', 'y', 'vel', 'accel', 'orientation', 'dist_qb', 'receiver_type']:
                                     self.data[f"{field}_{k}"].append(None)
-                                for j in range(2):
+                                for k in range(2):
                                     for field in ['x', 'y', 'vel', 'accel', 'orientation']:
                                         self.data[f"defensor_{field}_{j}_{k}"].append(None)
                         else:
                             for field in ['x', 'y', 'vel', 'accel', 'orientation', 'dist_qb', 'receiver_type']:
                                 self.data[f"{field}_{k}"].append(None)
-                            for j in range(2):
+                            for k in range(2):
                                 for field in ['x', 'y', 'vel', 'accel', 'orientation']:
                                     self.data[f"defensor_{field}_{j}_{k}"].append(None)
 
