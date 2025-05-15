@@ -13,16 +13,18 @@ if torch.cuda.is_available():
 else:
   DEVICE = torch.device("cpu")
 
-def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False):
+def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=True):
     if not saved:
         dataset = PlaysData(variant, all = all_frames)
         if save:
             dataset.get_csv()
-
     else:
         dataset = PlaysData(variant, pd.read_csv(f"./finalFeatures/final_data_variant{variant}.csv"), all = all_frames)
 
     n = len(dataset)
+
+    if distr_analysis:
+      dataset.distributions_analysis()
 
     print(f"**BEFORE CLEANING** Dataset size: {n}")
     dataset.converting_numerical_and_cleaning()
@@ -151,6 +153,6 @@ def plotting(version, loss_training, acc_training, loss_val, acc_val):
 # getting_loader(16, save=True, num_workers=0, variant = 1, train_p=0.8, saved=False, drop_qb_orientation=True, all_frames=True)
 # getting_loader(16, save=True, num_workers=0, variant = 2, train_p=0.8, saved=False, drop_qb_orientation=True, all_frames=True)
 # getting_loader(16, save=True, num_workers=0, variant = 3, train_p=0.8, saved=False, drop_qb_orientation=True, all_frames=True)
-getting_loader(16, save=True, num_workers=0, variant = 5, train_p=0.8, saved=False, drop_qb_orientation=False)
-getting_loader(16, save=True, num_workers=0, variant = 6, train_p=0.8, saved=False, drop_qb_orientation=False)
+getting_loader(16, save=False, num_workers=0, variant = 5, train_p=0.8, saved=True, drop_qb_orientation=False)
+getting_loader(16, save=False, num_workers=0, variant = 6, train_p=0.8, saved=True, drop_qb_orientation=False)
 

@@ -2,6 +2,7 @@ from torch.utils.data import Dataset
 import torch
 import pandas as pd
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 import numpy as np
 
 class PlaysData(Dataset):
@@ -211,7 +212,7 @@ class PlaysData(Dataset):
             if pd.api.types.is_numeric_dtype(self.data[col]) and (col != "result" or self.v == 2):
                 result_parts.append(self.data[[col]].astype(float))
             else:
-                dummies = pd.get_dummies(self.data[col], prefix=col)
+                dummies = pd.get_dummies(self.data[col], prefix=col, dtype=int)
                 result_parts.append(dummies)
 
         self.data = pd.concat(result_parts, axis=1)
@@ -240,6 +241,19 @@ class PlaysData(Dataset):
 
     def correlation_analysis(self):
         pass
+
+    def distributions_analysis(self):
+        for col in self.data.columns:
+            if not pd.api.types.is_numeric_dtype(self.data[col]) or pd.api.types.is_integer_dtype(self.data[col]):
+                plt.figure(figsize=(6, 4))
+                self.data[col].value_counts(dropna=False).sort_index().plot(kind='bar')
+                plt.title(f'Distribution of {col}')
+                plt.xlabel(col)
+                plt.ylabel('Count')
+                plt.xticks(rotation=45)
+                plt.tight_layout()
+                plt.savefig(f"./distributions/distr_{col}.png")
+
     
     def augmentation(self):
         pass
