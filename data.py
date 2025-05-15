@@ -211,6 +211,9 @@ class PlaysData(Dataset):
         for col in tqdm(self.data.columns):
             if pd.api.types.is_numeric_dtype(self.data[col]) and (col != "result" or self.v == 2):
                 result_parts.append(self.data[[col]].astype(float))
+            elif self.v == 5 and col == "result":
+                binary_results = self.data[col].map({'C': 1, 'I': 0})
+                result_parts.append(binary_results.to_frame())
             else:
                 dummies = pd.get_dummies(self.data[col], prefix=col, dtype=int)
                 result_parts.append(dummies)

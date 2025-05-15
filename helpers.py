@@ -54,14 +54,23 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
 
 def get_acc(y_hat, y, t):
     with torch.no_grad():
-        if t in {1, 3, 4}:
+        #regression
+        if t == 2:
+            tolerance = 10.0
+            inferences = (torch.abs(y_hat - y) < tolerance).float()
+
+        #binary classification
+        elif t == 5:
+            probs = torch.sigmoid(y_hat) 
+            preds = (probs >= 0.5)
+            inferences = (preds == y)
+
+        #multi class classification (3 and 5)
+        else:  
             y = torch.argmax(y, dim=1)
             probs = torch.softmax(y_hat, dim=1)
             preds = torch.argmax(probs, dim=1)
             inferences = (preds == y).float()
-        else:  
-            tolerance = 10.0
-            inferences = (torch.abs(y_hat - y) < tolerance).float()
 
     return torch.mean(inferences).item()
 
@@ -153,6 +162,6 @@ def plotting(version, loss_training, acc_training, loss_val, acc_val):
 # getting_loader(16, save=True, num_workers=0, variant = 1, train_p=0.8, saved=False, drop_qb_orientation=True, all_frames=True)
 # getting_loader(16, save=True, num_workers=0, variant = 2, train_p=0.8, saved=False, drop_qb_orientation=True, all_frames=True)
 # getting_loader(16, save=True, num_workers=0, variant = 3, train_p=0.8, saved=False, drop_qb_orientation=True, all_frames=True)
-getting_loader(16, save=False, num_workers=0, variant = 5, train_p=0.8, saved=True, drop_qb_orientation=False)
-getting_loader(16, save=False, num_workers=0, variant = 6, train_p=0.8, saved=True, drop_qb_orientation=False)
+# getting_loader(16, save=False, num_workers=0, variant = 5, train_p=0.8, saved=True, drop_qb_orientation=False)
+getting_loader(16, save=True, num_workers=0, variant = 5, train_p=0.8, saved=True, drop_qb_orientation=False)
 
