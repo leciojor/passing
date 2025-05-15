@@ -151,6 +151,6 @@ def plotting(version, loss_training, acc_training, loss_val, acc_val):
 # getting_loader(16, save=True, num_workers=0, variant = 1, train_p=0.8, saved=False, drop_qb_orientation=True, all_frames=True)
 # getting_loader(16, save=True, num_workers=0, variant = 2, train_p=0.8, saved=False, drop_qb_orientation=True, all_frames=True)
 # getting_loader(16, save=True, num_workers=0, variant = 3, train_p=0.8, saved=False, drop_qb_orientation=True, all_frames=True)
-getting_loader(16, save=True, num_workers=0, variant = 5, train_p=0.8, saved=False, drop_qb_orientation=True)
-getting_loader(16, save=True, num_workers=0, variant = 6, train_p=0.8, saved=False, drop_qb_orientation=True)
+getting_loader(16, save=True, num_workers=0, variant = 5, train_p=0.8, saved=False, drop_qb_orientation=False)
+getting_loader(16, save=True, num_workers=0, variant = 6, train_p=0.8, saved=False, drop_qb_orientation=False)
 

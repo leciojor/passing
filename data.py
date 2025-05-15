@@ -181,15 +181,17 @@ class PlaysData(Dataset):
                     elif self.v == 3 or self.v == 5 or self.v == 6:
                         pass_result = play_info.iloc[0]['passResult']
                         if self.v == 5 or self.v == 3:
-                            if pass_result != "R" and pass_result != "S":
-                                self.data["result"].append(pass_result)
+                            if pass_result == "C":
+                                self.data["result"].append("C")
                             else:
-                                self.data["result"].append(None)
+                                self.data["result"].append("I")
                         elif self.v == 6:
-                            if pass_result != "R" and pass_result != "S" and pass_result != "IN":
-                                self.data["result"].append(pass_result)
+                            if pass_result == "C":
+                                self.data["result"].append("C")
+                            elif pass_result == "In":
+                                self.data["result"].append("In")
                             else:
-                                self.data["result"].append(None)
+                                self.data["result"].append("I")
 
 
         week_df_i += 1        
