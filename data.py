@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class PlaysData(Dataset):
-    variants_output_size = {1:5,2:1,3:3,4:5}
+    variants_output_size = {1:5,2:1,3:3,4:5,5:1,6:3}
 
     def __init__(self, variant, data=None, all=False):
         self.v = variant
