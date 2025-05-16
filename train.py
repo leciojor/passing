@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import torch.nn.functional as F
 import numpy as np
-from helpers import getting_loader, get_acc, get_val, train, plotting, DeepQBVariant1, DeepQBVariant2, DeepQBVariant3
+from helpers import getting_loader, get_acc, get_val, train, plotting
+from archs import DeepQBVariant1
 
 if torch.cuda.is_available():
   DEVICE = torch.device("cuda")
