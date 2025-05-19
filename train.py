@@ -24,7 +24,7 @@ train_loader, val_loader, dataset = getting_loader(16, save=False, num_workers=0
 net = DeepQBVariant1(input_dim=dataset.col_size - 1, output_dim=1)
 optimizer = torch.optim.Adam(lr=lr, params=net.parameters())
 version = f"variant5_lr:{lr}_n:{n}"
-loss_training, acc_training, loss_val, acc_val = train(net, optimizer, nn.BCEWithLogitsLoss(), train_loader, val_loader, n, 1, 1, None, version, t=5, pretrained=False)
+loss_training, acc_training, loss_val, acc_val = train(net, optimizer, nn.BCEWithLogitsLoss(), train_loader, val_loader, n, 1, 1000, None, version, t=5, pretrained=False)
 plotting(version, loss_training, acc_training, loss_val, acc_val)
 
 #training variant 6
@@ -33,5 +33,5 @@ train_loader, val_loader, dataset = getting_loader(16, save=False, num_workers=0
 net = DeepQBVariant1(input_dim=dataset.col_size - 3, output_dim=3)
 optimizer = torch.optim.Adam(lr=lr, params=net.parameters())
 version = f"variant6:{lr}_n:{n}"
-loss_training, acc_training, loss_val, acc_val = train(net, optimizer, nn.CrossEntropyLoss(), train_loader, val_loader, n, 1, 1, None,f"variant6:{lr}_n:{n}", t=6, pretrained=False)
+loss_training, acc_training, loss_val, acc_val = train(net, optimizer, nn.CrossEntropyLoss(), train_loader, val_loader, n, 1, 1000, None,f"variant6:{lr}_n:{n}", t=6, pretrained=False)
 plotting(version, loss_training, acc_training, loss_val, acc_val)
