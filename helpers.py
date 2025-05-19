@@ -152,16 +152,10 @@ def plotting(version, loss_training, acc_training, loss_val, acc_val):
       plt.plot(results)
       plt.legend()
       plt.title(title)
-      plt.savefig(title + ".png")
+      plt.savefig("modelsPerformance/" + title + ".png")
+      plt.show()
 
   plot_(f"Loss Training {version}", loss_training, "Loss")
   plot_(f"Accuracy Training {version}", acc_training, "Accuracy")
   plot_(f"Loss Validation {version}", loss_val, "Loss", val=True)
   plot_(f"Accuracy Validation {version}", acc_val, "Accuracy", val=True)
-
-# getting_loader(16, save=True, num_workers=0, variant = 1, train_p=0.8, saved=False, drop_qb_orientation=True, all_frames=True)
-# getting_loader(16, save=True, num_workers=0, variant = 2, train_p=0.8, saved=False, drop_qb_orientation=True, all_frames=True)
-# getting_loader(16, save=True, num_workers=0, variant = 3, train_p=0.8, saved=False, drop_qb_orientation=True, all_frames=True)
-# getting_loader(16, save=False, num_workers=0, variant = 5, train_p=0.8, saved=True, drop_qb_orientation=False)
-getting_loader(16, save=True, num_workers=0, variant = 5, train_p=0.8, saved=True, drop_qb_orientation=False)
-
