@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import torch.nn.functional as F
 import numpy as np
-from helpers import getting_loader, get_acc, get_val, train, plotting, DeepQBVariant1, DeepQBVariant2, DeepQBVariant3
+from helpers import getting_loader, get_acc, get_val, train, plotting
+from archs import DeepQBVariant1
 
 if torch.cuda.is_available():
   DEVICE = torch.device("cuda")
@@ -20,7 +21,7 @@ lr = 0.01
 #training variant 5
 
 train_loader, val_loader, dataset = getting_loader(16, save=False, num_workers=0, variant = 5, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True)
-net = DeepQBVariant1(input_dim=len(dataset.columns), output_dim=1)
+net = DeepQBVariant1(input_dim=dataset.col_size - 1, output_dim=1)
 optimizer = torch.optim.Adam(lr=lr, params=net.parameters())
 version = f"variant5_lr:{lr}_n:{n}"
 loss_training, acc_training, loss_val, acc_val = train(net, optimizer, nn.BCEWithLogitsLoss(), train_loader, val_loader, n, 1, 1, None, version, t=5, pretrained=False)
@@ -29,7 +30,7 @@ plotting(version, loss_training, acc_training, loss_val, acc_val)
 #training variant 6
 
 train_loader, val_loader, dataset = getting_loader(16, save=False, num_workers=0, variant = 6, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True)
-net = DeepQBVariant1(input_dim=len(dataset.columns), output_dim=3)
+net = DeepQBVariant1(input_dim=dataset.col_size - 3, output_dim=3)
 optimizer = torch.optim.Adam(lr=lr, params=net.parameters())
 version = f"variant6:{lr}_n:{n}"
 loss_training, acc_training, loss_val, acc_val = train(net, optimizer, nn.CrossEntropyLoss(), train_loader, val_loader, n, 1, 1, None,f"variant6:{lr}_n:{n}", t=6, pretrained=False)

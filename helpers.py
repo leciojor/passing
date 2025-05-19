@@ -63,7 +63,7 @@ def get_acc(y_hat, y, t):
         elif t == 5:
             probs = torch.sigmoid(y_hat) 
             preds = (probs >= 0.5)
-            inferences = (preds == y)
+            inferences = (preds == y).float()
 
         #multi class classification (3 and 5)
         else:  
