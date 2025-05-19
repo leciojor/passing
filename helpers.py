@@ -19,7 +19,7 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
         if save:
             dataset.get_csv()
     else:
-        dataset = PlaysData(variant, pd.read_csv(f"./finalFeatures/final_data_variant{variant}.csv"), all = all_frames)
+        dataset = PlaysData(variant, pd.read_csv(f"./finalFeatures/final_data_variant{variant}_{all_frames}.csv"), all = all_frames)
 
     n = len(dataset)
 
@@ -29,7 +29,7 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
     print(f"**BEFORE CLEANING** Dataset size: {n}")
     dataset.converting_numerical_and_cleaning()
     if save:
-        dataset.get_csv(name = f"./finalFeatures/final_data_variant{variant}_cleaned.csv")
+        dataset.get_csv(name = f"./finalFeatures/final_data_variant{variant}_{all_frames}_cleaned.csv")
     n_clean = len(dataset)
     print(f"**AFTER CLEANING** Dataset size: {n_clean}")
 
@@ -37,16 +37,20 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
        dataset.data = dataset.data.drop("qb_orientation", axis=1)
        dataset.col_size = dataset.data.shape[1]
 
-    train_amount = int(n_clean*train_p)
-    train_indices = list(range(train_amount + 1))
-    val_indices = list(range(train_amount + 1, n_clean))
+    if not all_frames:
+      train_amount = int(n_clean*train_p)
+      train_indices = list(range(train_amount + 1))
+      val_indices = list(range(train_amount + 1, n_clean))
 
-    train_dataset = Subset(dataset, train_indices)
-    val_dataset = Subset(dataset, val_indices)
+      train_dataset = Subset(dataset, train_indices)
+      val_dataset = Subset(dataset, val_indices)
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=num_workers)
+      train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+      val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=num_workers)
 
+    else:
+       return DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers), dataset
+    
     if get_dataset:
       return train_loader, val_loader, dataset
     return train_loader, val_loader

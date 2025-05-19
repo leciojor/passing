@@ -8,8 +8,9 @@ import numpy as np
 class PlaysData(Dataset):
     variants_output_size = {1:5,2:1,3:3,4:5,5:1,6:3}
 
-    def __init__(self, variant, data=None, all=False):
+    def __init__(self, variant, data=None, all=False, p=3):
         self.v = variant
+        self.p = p
         self.all = all
         if data is None:
             self.players = pd.read_csv("data/players.csv")
@@ -77,6 +78,7 @@ class PlaysData(Dataset):
 
             #iteration over all plays 
             for (gameId, playId), play_df in merged.groupby(['gameId', 'playId']):
+
                 play_players = self.player_play[
                     (self.player_play['gameId'] == gameId) &
                     (self.player_play['playId'] == playId)
@@ -94,7 +96,8 @@ class PlaysData(Dataset):
                     amount_of_qb_frames = len(qb_data)
                 else:
                     amount_of_qb_frames = 1
-                    
+                
+                print(amount_of_qb_frames)
                 # iteration over play qb frames
                 for i in range(amount_of_qb_frames):
                     if not self.all:
@@ -191,9 +194,15 @@ class PlaysData(Dataset):
                                 self.data["result"].append(pass_result)
                             else:
                                 self.data["result"].append("I")
+                
+                if self.all:
+                    break
+                
+            if self.all:
+                break
 
+        week_df_i += 1  
 
-        week_df_i += 1        
     def sorting_receivers(self, play_df, ball_frame):
         frame = play_df[play_df['frameId'] == ball_frame]
         receiver_positions = frame[frame['nflId'].isin(self.receivers['nflId'])][['nflId', 'y']]
@@ -263,7 +272,7 @@ class PlaysData(Dataset):
 
     def get_csv(self, name=False):
         if not name:
-            name = f"./finalFeatures/final_data_variant{self.v}.csv"
+            name = f"./finalFeatures/final_data_variant{self.v}_{self.all}.csv"
         self.data.to_csv(name, index=False)
 
 

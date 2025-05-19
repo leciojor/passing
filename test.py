@@ -54,5 +54,43 @@ def getting_results_distribution():
         plt.savefig(f"distributions/models/distribution_variant{variant}_model {filename}.png")
         plt.show()
 
-def getting_time_series_analysis():
+
+
+def getting_time_series_analysis_binary_classification(model_file):
+    variant = 5
+    loader, dataset = getting_loader(1, save=True, num_workers=0, variant = variant, train_p=0.8, saved=False, distr_analysis=False, get_dataset=True, all_frames=True)
+    state = torch.load(model_file, map_location=DEVICE)
+    output_dim = 1
+    model = DeepQBVariant1(input_dim=dataset.col_size - output_dim, output_dim=output_dim)
+    model.load_state_dict(state)
+    model.eval()
+
+    predictions = []
+    with torch.no_grad():
+        i = 0
+        for x, y in loader:
+            y_hat = model(x)
+            probs = torch.sigmoid(y_hat) 
+            predictions.extend(probs.cpu().numpy().flatten().tolist())
+            i+=1
+    
+    plt.title("Time Series of pass completion probability")
+    plt.plot(list(range(i)), predictions)
+    plt.show()
+    plt.savefig(f"timeseries/timeseries_analysis_model{model_file}.png")
+
+
+def getting_time_series_analysis_multi_class_classification(model_file):
     pass
+
+def getting_time_series_analysis_for_each_receiver(model_file):
+    pass
+
+
+
+getting_time_series_analysis_binary_classification("models/model_variant5_lr0.01_n80000.pkl")
+    
+
+
+    
+
