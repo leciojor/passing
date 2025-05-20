@@ -58,7 +58,7 @@ def getting_results_distribution():
 
 def getting_time_series_analysis_binary_classification(model_file, i=4):
     variant = 5
-    loader, dataset = getting_loader(1, save=False, num_workers=0, variant = variant, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True, all_frames=True, i=i)
+    loader, dataset = getting_loader(1, save=False, num_workers=0, variant = variant, train_p=0.8, saved=False, distr_analysis=False, get_dataset=True, all_frames=True, i=i)
     state = torch.load(model_file, map_location=DEVICE)
     output_dim = 1
     model = DeepQBVariant1(input_dim=dataset.col_size - output_dim, output_dim=output_dim)
