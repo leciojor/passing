@@ -277,7 +277,18 @@ class PlaysData(Dataset):
                 plt.tight_layout()
                 plt.savefig(f"./distributions/distr_{col}.png")
 
-    
+    def change_orientation_based_on_receiver(self, receiver):
+        x_qb = np.array(self.data["qb_x"])
+        y_qb = np.array(self.data["qb_y"])
+        x_receiver = np.array(self.data[f"x_{receiver}"])
+        y_receiver = np.array(self.data[f"y_{receiver}"])
+
+        dx = x_receiver - x_qb
+        dy = y_receiver - y_qb
+
+        self.data["qb_direction"] = (np.degrees(np.arctan2(dy, dx))) % 360
+
+
     def augmentation(self):
         pass
 

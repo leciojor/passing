@@ -87,12 +87,12 @@ def getting_time_series_analysis_for_each_receiver(model_file):
     pass
 
 
-for filename in os.listdir("models"):
-    file_path = os.path.join("models", filename)
-    variant = int(re.search(r'variant(\d+)', filename).group(1))
-    if variant == 5:
-        for i in [4,6]:
-            getting_time_series_analysis_binary_classification(file_path, i=i)
+# for filename in os.listdir("models"):
+#     file_path = os.path.join("models", filename)
+#     variant = int(re.search(r'variant(\d+)', filename).group(1))
+#     if variant == 5:
+#         for i in [4,6]:
+#             getting_time_series_analysis_binary_classification(file_path, i=i)
 
 
 
