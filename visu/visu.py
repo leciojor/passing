@@ -6,6 +6,29 @@ from typing import Dict, List, Optional
 from matplotlib.patches import Ellipse
 from matplotlib.patheffects import withStroke
 import matplotlib.patches as patches
+from archs import DeepQBVariant1
+from ..data import PlaysData
+import torch
+
+if torch.cuda.is_available():
+  DEVICE = torch.device("cuda")
+else:
+  DEVICE = torch.device("cpu")
+
+
+def get_model_prediction_for_receiver(dataset, x, receiver, model_file):
+    dataset.change_orientation_based_on_receiver(receiver)
+
+    variant = 5
+    state = torch.load(model_file, map_location=DEVICE)
+    output_dim = 1
+    model = DeepQBVariant1(input_dim=dataset.col_size - output_dim, output_dim=output_dim)
+    model.load_state_dict(state)
+    model.eval()
+
+    y_hat = model(x)
+    prob = torch.sigmoid(y_hat) 
+    return prob.item()
 
 def create_football_field() -> tuple:
     """Create a football field plot."""
