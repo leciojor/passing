@@ -6,7 +6,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class PlaysData(Dataset):
-    variants_output_size = {1:5,2:1,3:3,4:5,5:1,6:3}
+    VARIANTS_OUTPUT_SIZE = {1:5,2:1,3:3,4:5,5:1,6:3}
+    # QB will be removed when exception scenarios are removed/considered
+    RECEIVER_TYPES = ["WR", "TE", "QB", "RB", "FB"]
 
     def __init__(self, variant, data=None, all=False, p=3):
         self.v = variant
@@ -38,7 +40,7 @@ class PlaysData(Dataset):
 
     def __getitem__(self, i):
         row = self.data.iloc[i]
-        return torch.tensor(row.iloc[:self.col_size-PlaysData.variants_output_size[self.v]].values, dtype=torch.float32), torch.tensor(row.iloc[self.col_size-PlaysData.variants_output_size[self.v]:].values, dtype=torch.float32)
+        return torch.tensor(row.iloc[:self.col_size-PlaysData.VARIANTS_OUTPUT_SIZE[self.v]].values, dtype=torch.float32), torch.tensor(row.iloc[self.col_size-PlaysData.VARIANTS_OUTPUT_SIZE[self.v]:].values, dtype=torch.float32)
 
     def __str__(self):
         return self.data
@@ -72,12 +74,17 @@ class PlaysData(Dataset):
     def process_plays(self):
         #iteration over all tracking... csvs
         week_df_i = 0
+        play_i = 0 
         for week_df in tqdm(self.tracking):
             week_df = week_df.merge(self.players[['nflId', 'position']], on='nflId', how='left')
             merged = week_df.merge(self.plays, on=['gameId', 'playId'], how='inner')
 
             #iteration over all plays 
             for (gameId, playId), play_df in merged.groupby(['gameId', 'playId']):
+                
+                if self.all and play_i != 4:
+                    play_i += 1
+                    continue
 
                 play_players = self.player_play[
                     (self.player_play['gameId'] == gameId) &
@@ -97,7 +104,6 @@ class PlaysData(Dataset):
                 else:
                     amount_of_qb_frames = 1
                 
-                print(amount_of_qb_frames)
                 # iteration over play qb frames
                 for i in range(amount_of_qb_frames):
                     if not self.all:
@@ -197,7 +203,7 @@ class PlaysData(Dataset):
                 
                 if self.all:
                     break
-                
+
             if self.all:
                 break
 
@@ -214,9 +220,10 @@ class PlaysData(Dataset):
     def converting_numerical_and_cleaning(self, r=False):
         result_parts = []
 
-        #removing initial nans (just based on result)
+        #removing initial nans (just based on results or x_0)
         self.data.dropna(subset=['result', 'x_0'], inplace=True)
         
+        #adding one hot encoding for discrete features
         for col in tqdm(self.data.columns):
             if pd.api.types.is_numeric_dtype(self.data[col]) and (col != "result" or self.v == 2):
                 result_parts.append(self.data[[col]].astype(float))
@@ -224,6 +231,9 @@ class PlaysData(Dataset):
                 binary_results = self.data[col].map({'C': 1, 'I': 0})
                 result_parts.append(binary_results.to_frame())
             else:
+                if any(col == f'receiver_type_{i}' for i in range(5)):
+                    self.data[col] = pd.Categorical(self.data[col], categories=PlaysData.RECEIVER_TYPES)
+
                 dummies = pd.get_dummies(self.data[col], prefix=col, dtype=int)
                 result_parts.append(dummies)
 

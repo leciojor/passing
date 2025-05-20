@@ -49,7 +49,7 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
       val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=num_workers)
 
     else:
-       return DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers), dataset
+       return DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers), dataset 
     
     if get_dataset:
       return train_loader, val_loader, dataset

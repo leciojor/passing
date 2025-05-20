@@ -80,12 +80,11 @@ def getting_time_series_analysis_binary_classification(model_file):
     plt.savefig(f"timeseries/timeseries_analysis_model{model_file}.png")
 
 
-def getting_time_series_analysis_multi_class_classification(model_file):
+def getting_time_series_analysis_multi_class_classification(model_file[-10:]):
     pass
 
 def getting_time_series_analysis_for_each_receiver(model_file):
     pass
-
 
 
 getting_time_series_analysis_binary_classification("models/model_variant5_lr0.01_n80000.pkl")
