@@ -10,7 +10,8 @@ class PlaysData(Dataset):
     # QB will be removed when exception scenarios are removed/considered
     RECEIVER_TYPES = ["WR", "TE", "QB", "RB", "FB"]
 
-    def __init__(self, variant, data=None, all=False, p=3):
+    def __init__(self, variant, data=None, all=False, p=3, i=4):
+        self.i = i
         self.v = variant
         self.p = p
         self.all = all
@@ -82,7 +83,7 @@ class PlaysData(Dataset):
             #iteration over all plays 
             for (gameId, playId), play_df in merged.groupby(['gameId', 'playId']):
                 
-                if self.all and play_i != 4:
+                if self.all and play_i != self.i:
                     play_i += 1
                     continue
 

@@ -56,9 +56,9 @@ def getting_results_distribution():
 
 
 
-def getting_time_series_analysis_binary_classification(model_file):
+def getting_time_series_analysis_binary_classification(model_file, i=4):
     variant = 5
-    loader, dataset = getting_loader(1, save=True, num_workers=0, variant = variant, train_p=0.8, saved=False, distr_analysis=False, get_dataset=True, all_frames=True)
+    loader, dataset = getting_loader(1, save=False, num_workers=0, variant = variant, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True, all_frames=True, i=i)
     state = torch.load(model_file, map_location=DEVICE)
     output_dim = 1
     model = DeepQBVariant1(input_dim=dataset.col_size - output_dim, output_dim=output_dim)
@@ -67,28 +67,33 @@ def getting_time_series_analysis_binary_classification(model_file):
 
     predictions = []
     with torch.no_grad():
-        i = 0
+        i_ = 0
         for x, y in loader:
             y_hat = model(x)
             probs = torch.sigmoid(y_hat) 
             predictions.extend(probs.cpu().numpy().flatten().tolist())
-            i+=1
+            i_+=1
     
-    plt.title("Time Series of pass completion probability")
-    plt.plot(list(range(i)), predictions)
+    plt.title(f"Time Series of pass completion probability {model_file[-20:]} instance {i}")
+    plt.plot(list(range(i_)), predictions)
+    plt.savefig(f"timeseries/timeseries_analysis_model{model_file[-20:]}instance {i}.png")
     plt.show()
-    plt.savefig(f"timeseries/timeseries_analysis_model{model_file}.png")
 
 
-def getting_time_series_analysis_multi_class_classification(model_file[-10:]):
+def getting_time_series_analysis_multi_class_classification(model_file):
     pass
 
 def getting_time_series_analysis_for_each_receiver(model_file):
     pass
 
 
-getting_time_series_analysis_binary_classification("models/model_variant5_lr0.01_n80000.pkl")
-    
+for filename in os.listdir("models"):
+    file_path = os.path.join("models", filename)
+    variant = int(re.search(r'variant(\d+)', filename).group(1))
+    if variant == 5:
+        for i in [4,6]:
+            getting_time_series_analysis_binary_classification(file_path, i=i)
+
 
 
     
