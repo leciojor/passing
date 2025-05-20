@@ -283,7 +283,11 @@ class PlaysData(Dataset):
 
     def get_csv(self, name=False):
         if not name:
-            name = f"./finalFeatures/final_data_variant{self.v}_{self.all}.csv"
+            if self.all:
+                name = f"./finalFeatures/final_data_variant{self.v}_{self.all}_instance{self.i}.csv"
+            else:
+                name = f"./finalFeatures/final_data_variant{self.v}_{self.all}.csv"
+
         self.data.to_csv(name, index=False)
 
 

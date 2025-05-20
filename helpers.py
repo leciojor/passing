@@ -19,7 +19,10 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
         if save:
             dataset.get_csv()
     else:
-        dataset = PlaysData(variant, pd.read_csv(f"./finalFeatures/final_data_variant{variant}_{all_frames}.csv"), all = all_frames, i=i)
+        if all_frames:
+          dataset = PlaysData(variant, pd.read_csv(f"./finalFeatures/final_data_variant{variant}_{all_frames}_instance{i}.csv"), all = all_frames, i=i)
+        else:
+          dataset = PlaysData(variant, pd.read_csv(f"./finalFeatures/final_data_variant{variant}_{all_frames}.csv"), all = all_frames, i=i)
 
     n = len(dataset)
 
@@ -29,7 +32,10 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
     print(f"**BEFORE CLEANING** Dataset size: {n}")
     dataset.converting_numerical_and_cleaning()
     if save:
-        dataset.get_csv(name = f"./finalFeatures/final_data_variant{variant}_{all_frames}_cleaned.csv")
+        if all_frames:
+          dataset.get_csv(name = f"./finalFeatures/final_data_variant{variant}_{all_frames}_instance{i}_cleaned.csv")
+        else:
+          dataset.get_csv(name = f"./finalFeatures/final_data_variant{variant}_{all_frames}_cleaned.csv")
     n_clean = len(dataset)
     print(f"**AFTER CLEANING** Dataset size: {n_clean}")
 
