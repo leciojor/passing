@@ -15,6 +15,7 @@ if torch.cuda.is_available():
 else:
   DEVICE = torch.device("cpu")
 
+MODEL_FILE = "model_variant5_lr_0.01_n_250000.pkl"
 
 def get_model_prediction_for_receiver(dataset, receiver, model_file, frameId):
     x = dataset.get_orientation_based_on_receiver(receiver, frameId)
@@ -248,7 +249,10 @@ def animate_play(game_id: int, play_id: int,
     def update(frame: int) -> List:
         """Update player positions for each frame."""
         frame_data = play_data[play_data['frameId'] == frame]
-        
+        probs = []
+        for receiver in range(5):
+            probs.append(get_model_prediction_for_receiver(dataset, receiver, MODEL_FILE, frame))
+
         # Separate players and football
         players_data = frame_data[
             (frame_data['nflId'].notna()) & 
