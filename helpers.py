@@ -61,6 +61,8 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
       return train_loader, val_loader, dataset
     return train_loader, val_loader
 
+def getting_frames_datasets(variant, model_file):
+   pass
 
 def get_acc(y_hat, y, t):
     with torch.no_grad():

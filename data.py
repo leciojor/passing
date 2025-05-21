@@ -10,7 +10,7 @@ class PlaysData(Dataset):
     # QB will be removed when exception scenarios are removed/considered
     RECEIVER_TYPES = ["WR", "TE", "QB", "RB", "FB"]
 
-    def __init__(self, variant, data=None, all=False, p=3, i=4):
+    def __init__(self, variant, data=None, all=False, p=3, i=4, game_id=2022091200, play_id=180):
         self.i = i
         self.v = variant
         self.p = p
@@ -71,7 +71,10 @@ class PlaysData(Dataset):
         self.data["amount_of_players_causing_pressure_on_qb"] = []
 
         self.data["result"] = []
-        
+    
+    def process_frames_of_play(self):
+        pass
+
     def process_plays(self):
         #iteration over all tracking... csvs
         week_df_i = 0

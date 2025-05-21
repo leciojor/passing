@@ -9,6 +9,7 @@ import matplotlib.patches as patches
 from archs import DeepQBVariant1
 from ..data import PlaysData
 import torch
+from helpers import getting_frames_datasets
 
 if torch.cuda.is_available():
   DEVICE = torch.device("cuda")
@@ -139,7 +140,8 @@ def animate_play(game_id: int, play_id: int,
                 df_plays: pd.DataFrame,
                 df_games: pd.DataFrame,
                 show_labels: str = 'number',  # 'number' or 'position'
-                save_path: Optional[str] = None) -> None:
+                save_path: Optional[str] = None,
+                loaded=False) -> None:
     """Animate player tracking data for a specific play."""
     # Get data for this play
     play_data = get_play_data(game_id, play_id, df_tracking, df_players, df_plays, df_games)
@@ -356,7 +358,7 @@ def main():
     #    3980, 4012
     
     print(f"Animating game {game_id}, play {play_id}...")
-    animate_play(game_id, play_id, df_tracking, df_players, df_plays, df_games, show_labels='position')
+    animate_play(game_id, play_id, df_tracking, df_players, df_plays, df_games, show_labels='position', loaded=False)
 
 if __name__ == "__main__":
     main() 
