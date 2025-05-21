@@ -13,14 +13,14 @@ if torch.cuda.is_available():
 else:
   DEVICE = torch.device("cpu")
 
-def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=True, i=4):
+def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=True, i=4, play_id=None, game_id=None):
     if not saved:
         dataset = PlaysData(variant, all = all_frames, i=i)
         if save:
             dataset.get_csv()
     else:
         if all_frames:
-          dataset = PlaysData(variant, pd.read_csv(f"./finalFeatures/final_data_variant{variant}_{all_frames}_instance{i}.csv"), all = all_frames, i=i)
+            dataset = PlaysData(variant, pd.read_csv(f"./finalFeatures/final_data_variant{variant}_{all_frames}_instance{i}.csv"), all = all_frames, i=i, game_id=game_id, play_id=play_id)
         else:
           dataset = PlaysData(variant, pd.read_csv(f"./finalFeatures/final_data_variant{variant}_{all_frames}.csv"), all = all_frames, i=i)
 
@@ -61,8 +61,9 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
       return train_loader, val_loader, dataset
     return train_loader, val_loader
 
-def getting_frames_datasets(variant, model_file):
-   pass
+def getting_frames_dataset(game_id, play_id, loaded):
+  loader, dataset = getting_loader(1, save=False, num_workers=0, variant = 5, train_p=0.8, saved=loaded, distr_analysis=False, get_dataset=True, game_id=game_id, play_id=play_id)
+  return dataset
 
 def get_acc(y_hat, y, t):
     with torch.no_grad():

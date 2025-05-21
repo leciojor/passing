@@ -7,9 +7,8 @@ from matplotlib.patches import Ellipse
 from matplotlib.patheffects import withStroke
 import matplotlib.patches as patches
 from archs import DeepQBVariant1
-from ..data import PlaysData
 import torch
-from helpers import getting_frames_datasets
+from helpers import getting_frames_dataset
 
 if torch.cuda.is_available():
   DEVICE = torch.device("cuda")
@@ -17,10 +16,9 @@ else:
   DEVICE = torch.device("cpu")
 
 
-def get_model_prediction_for_receiver(dataset, x, receiver, model_file):
-    dataset.change_orientation_based_on_receiver(receiver)
+def get_model_prediction_for_receiver(dataset, receiver, model_file, frameId):
+    x = dataset.get_orientation_based_on_receiver(receiver, frameId)
 
-    variant = 5
     state = torch.load(model_file, map_location=DEVICE)
     output_dim = 1
     model = DeepQBVariant1(input_dim=dataset.col_size - output_dim, output_dim=output_dim)
@@ -143,6 +141,9 @@ def animate_play(game_id: int, play_id: int,
                 save_path: Optional[str] = None,
                 loaded=False) -> None:
     """Animate player tracking data for a specific play."""
+
+    dataset = getting_frames_dataset(game_id, play_id, loaded)
+    
     # Get data for this play
     play_data = get_play_data(game_id, play_id, df_tracking, df_players, df_plays, df_games)
     
