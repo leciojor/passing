@@ -10,7 +10,7 @@ class PlaysData(Dataset):
     # QB will be removed when exception scenarios are removed/considered
     RECEIVER_TYPES = ["WR", "TE", "QB", "RB", "FB"]
 
-    def __init__(self, variant, data=None, all=False, p=3, i=4, game_id=2022091200, play_id=180):
+    def __init__(self, variant, data=None, all=False, p=3, i=4, game_id=None, play_id=None):
         self.i = i
         self.v = variant
         self.p = p
@@ -26,7 +26,13 @@ class PlaysData(Dataset):
             self.data = {}
 
             self.initializing_df_data()
-            self.process_plays()
+            if not game_id and not play_id:
+                self.process_plays()
+            else:
+                self.game_id = game_id
+                self.play_id = play_id
+                self.all = True
+                self.process_frames_of_play()
 
             self.data = pd.DataFrame.from_dict(self.data)
         else:
@@ -73,7 +79,130 @@ class PlaysData(Dataset):
         self.data["result"] = []
     
     def process_frames_of_play(self):
-        pass
+
+        for week_df in tqdm(self.tracking):
+            filtered_df = week_df[(week_df["playId"] == self.play_id) & (week_df["gameId"] == self.game_id)]
+
+            if not filtered_df.empty:
+                filtered_df = filtered_df.merge(self.players[['nflId', 'position']], on='nflId', how='left')
+                play_df = filtered_df.merge(self.plays, on=['gameId', 'playId'], how='inner')
+
+                self.play_df_formation(self.game_id, self.play_id, play_df)
+
+    def play_df_formation(self, gameId, playId, play_df):
+        play_players = self.player_play[
+            (self.player_play['gameId'] == gameId) &
+            (self.player_play['playId'] == playId)
+        ]
+        play_info = self.plays[
+            (self.plays['gameId'] == gameId) &
+            (self.plays['playId'] == playId)
+        ]
+
+        qb_data = play_df[play_df['position'] == 'QB']
+        
+        if self.all: 
+            amount_of_qb_frames = len(qb_data)
+        else:
+            amount_of_qb_frames = 1
+        
+        # iteration over play qb frames
+        for i in range(amount_of_qb_frames):
+            if not self.all:
+                i = -1
+
+            qb_snap = qb_data.sort_values('frameId').iloc[i]
+            ball_frame = qb_snap['frameId']
+
+            # getting qb features
+            self.data["qb_x"].append(qb_snap['x'])
+            self.data["qb_y"].append(qb_snap['y'])
+            self.data["qb_orientation"].append(qb_snap['o'])
+            self.data["qb_speed"].append(qb_snap['s'])
+            self.data["qb_direction"].append(qb_snap['dir'])
+            self.data["qb_accel"].append(qb_snap['a'])
+            
+            # getting receivers features
+            targetedReceiver = None
+            self.receivers = play_players[play_players['routeRan'].notna()].copy()
+
+            self.receivers = self.receivers.merge(self.players[['nflId', 'position']], on='nflId', how='left')
+            self.sorting_receivers(play_df, ball_frame)
+
+            for j in range(5):
+                if j < len(self.receivers):
+                    r = self.receivers.iloc[j]
+                    rid = r['nflId']
+                    r_data = play_df[(play_df['nflId'] == rid) & (play_df["frameId"] == ball_frame)]
+                    if not r_data.empty:
+                        r_snap = r_data.iloc[0]
+                        self.data[f"x_{j}"].append(r_snap['x'])
+                        self.data[f"y_{j}"].append(r_snap['y'])
+                        self.data[f"vel_{j}"].append(r_snap['s'])
+                        self.data[f"accel_{j}"].append(r_snap['a'])
+                        self.data[f"orientation_{j}"].append(r_snap['o'])
+                        dist = ((r_snap['x'] - qb_snap['x']) ** 2 + (r_snap['y'] - qb_snap['y']) ** 2) ** 0.5
+                        self.data[f"dist_qb_{j}"].append(dist)
+                        self.data[f"receiver_type_{j}"].append(r['position'])
+                        if r["wasTargettedReceiver"]:
+                            targetedReceiver = j
+
+                        # getting defenders features
+                        defenders = play_df[play_df['position'].isin(['CB', 'S', 'LB', 'FS', 'SS', 'DE', 'DT'])].copy()
+                        defenders['dist'] = ((defenders['x'] - r_snap['x']) ** 2 +
+                                            (defenders['y'] - r_snap['y']) ** 2) ** 0.5
+                        closest = defenders.nsmallest(2, 'dist')
+
+                        for k in range(2):
+                            if k < len(closest):
+                                d = closest.iloc[k]
+                                self.data[f"defensor_x_{j}_{k}"].append(d['x'])
+                                self.data[f"defensor_y_{j}_{k}"].append(d['y'])
+                                self.data[f"defensor_vel_{j}_{k}"].append(d['s'])
+                                self.data[f"defensor_accel_{j}_{k}"].append(d['a'])
+                                self.data[f"defensor_orientation_{j}_{k}"].append(d['o'])
+                            else:
+                                for field in ['x', 'y', 'vel', 'accel', 'orientation']:
+                                    self.data[f"defensor_{field}_{j}_{k}"].append(None)
+                    else:
+                        for field in ['x', 'y', 'vel', 'accel', 'orientation', 'dist_qb', 'receiver_type']:
+                            self.data[f"{field}_{j}"].append(None)
+                        for k in range(2):
+                            for field in ['x', 'y', 'vel', 'accel', 'orientation']:
+                                self.data[f"defensor_{field}_{j}_{k}"].append(None)
+                else:
+                    for field in ['x', 'y', 'vel', 'accel', 'orientation', 'dist_qb', 'receiver_type']:
+                        self.data[f"{field}_{j}"].append(None)
+                    for k in range(2):
+                        for field in ['x', 'y', 'vel', 'accel', 'orientation']:
+                            self.data[f"defensor_{field}_{j}_{k}"].append(None)
+
+            amount_causing_pressure = 0
+
+            for player in play_players.itertuples():
+                if player.causedPressure:
+                    amount_causing_pressure += 1
+
+            self.data["amount_of_players_causing_pressure_on_qb"].append(amount_causing_pressure)
+
+            if self.v == 1 or self.v == 4:
+                self.data["result"].append(targetedReceiver)
+            elif self.v == 2:
+                play_row = play_df[(play_df["gameId"] == gameId) & (play_df['playId'] == playId)]
+                self.data["result"].append(play_row['dis'].sum())
+            elif self.v == 3 or self.v == 5 or self.v == 6:
+                pass_result = play_info.iloc[0]['passResult']
+                if self.v == 5 or self.v == 3:
+                    if pass_result == "C":
+                        self.data["result"].append("C")
+                    else:
+                        self.data["result"].append("I")
+                elif self.v == 6:
+                    if pass_result == "C" or pass_result == "IN":
+                        self.data["result"].append(pass_result)
+                    else:
+                        self.data["result"].append("I")
+
 
     def process_plays(self):
         #iteration over all tracking... csvs
@@ -89,121 +218,8 @@ class PlaysData(Dataset):
                 if self.all and play_i != self.i:
                     play_i += 1
                     continue
-
-                play_players = self.player_play[
-                    (self.player_play['gameId'] == gameId) &
-                    (self.player_play['playId'] == playId)
-                ]
-                play_info = self.plays[
-                    (self.plays['gameId'] == gameId) &
-                    (self.plays['playId'] == playId)
-                ]
-
-                qb_data = play_df[play_df['position'] == 'QB']
-                if qb_data.empty:
-                    continue
                 
-                if self.all: 
-                    amount_of_qb_frames = len(qb_data)
-                else:
-                    amount_of_qb_frames = 1
-                
-                # iteration over play qb frames
-                for i in range(amount_of_qb_frames):
-                    if not self.all:
-                        i = -1
-
-                    qb_snap = qb_data.sort_values('frameId').iloc[i]
-                    ball_frame = qb_snap['frameId']
-
-                    # getting qb features
-                    self.data["qb_x"].append(qb_snap['x'])
-                    self.data["qb_y"].append(qb_snap['y'])
-                    self.data["qb_orientation"].append(qb_snap['o'])
-                    self.data["qb_speed"].append(qb_snap['s'])
-                    self.data["qb_direction"].append(qb_snap['dir'])
-                    self.data["qb_accel"].append(qb_snap['a'])
-                    
-                    # getting receivers features
-                    targetedReceiver = None
-                    self.receivers = play_players[play_players['routeRan'].notna()].copy()
-
-                    self.receivers = self.receivers.merge(self.players[['nflId', 'position']], on='nflId', how='left')
-                    self.sorting_receivers(play_df, ball_frame)
-
-                    for j in range(5):
-                        if j < len(self.receivers):
-                            r = self.receivers.iloc[j]
-                            rid = r['nflId']
-                            r_data = play_df[(play_df['nflId'] == rid) & (play_df["frameId"] == ball_frame)]
-                            if not r_data.empty:
-                                r_snap = r_data.iloc[0]
-                                self.data[f"x_{j}"].append(r_snap['x'])
-                                self.data[f"y_{j}"].append(r_snap['y'])
-                                self.data[f"vel_{j}"].append(r_snap['s'])
-                                self.data[f"accel_{j}"].append(r_snap['a'])
-                                self.data[f"orientation_{j}"].append(r_snap['o'])
-                                dist = ((r_snap['x'] - qb_snap['x']) ** 2 + (r_snap['y'] - qb_snap['y']) ** 2) ** 0.5
-                                self.data[f"dist_qb_{j}"].append(dist)
-                                self.data[f"receiver_type_{j}"].append(r['position'])
-                                if r["wasTargettedReceiver"]:
-                                    targetedReceiver = j
-
-                                # getting defenders features
-                                defenders = play_df[play_df['position'].isin(['CB', 'S', 'LB', 'FS', 'SS', 'DE', 'DT'])].copy()
-                                defenders['dist'] = ((defenders['x'] - r_snap['x']) ** 2 +
-                                                    (defenders['y'] - r_snap['y']) ** 2) ** 0.5
-                                closest = defenders.nsmallest(2, 'dist')
-
-                                for k in range(2):
-                                    if k < len(closest):
-                                        d = closest.iloc[k]
-                                        self.data[f"defensor_x_{j}_{k}"].append(d['x'])
-                                        self.data[f"defensor_y_{j}_{k}"].append(d['y'])
-                                        self.data[f"defensor_vel_{j}_{k}"].append(d['s'])
-                                        self.data[f"defensor_accel_{j}_{k}"].append(d['a'])
-                                        self.data[f"defensor_orientation_{j}_{k}"].append(d['o'])
-                                    else:
-                                        for field in ['x', 'y', 'vel', 'accel', 'orientation']:
-                                            self.data[f"defensor_{field}_{j}_{k}"].append(None)
-                            else:
-                                for field in ['x', 'y', 'vel', 'accel', 'orientation', 'dist_qb', 'receiver_type']:
-                                    self.data[f"{field}_{j}"].append(None)
-                                for k in range(2):
-                                    for field in ['x', 'y', 'vel', 'accel', 'orientation']:
-                                        self.data[f"defensor_{field}_{j}_{k}"].append(None)
-                        else:
-                            for field in ['x', 'y', 'vel', 'accel', 'orientation', 'dist_qb', 'receiver_type']:
-                                self.data[f"{field}_{j}"].append(None)
-                            for k in range(2):
-                                for field in ['x', 'y', 'vel', 'accel', 'orientation']:
-                                    self.data[f"defensor_{field}_{j}_{k}"].append(None)
-
-                    amount_causing_pressure = 0
-
-                    for player in play_players.itertuples():
-                        if player.causedPressure:
-                            amount_causing_pressure += 1
-
-                    self.data["amount_of_players_causing_pressure_on_qb"].append(amount_causing_pressure)
-
-                    if self.v == 1 or self.v == 4:
-                        self.data["result"].append(targetedReceiver)
-                    elif self.v == 2:
-                        play_row = play_df[(play_df["gameId"] == gameId) & (play_df['playId'] == playId)]
-                        self.data["result"].append(play_row['dis'].sum())
-                    elif self.v == 3 or self.v == 5 or self.v == 6:
-                        pass_result = play_info.iloc[0]['passResult']
-                        if self.v == 5 or self.v == 3:
-                            if pass_result == "C":
-                                self.data["result"].append("C")
-                            else:
-                                self.data["result"].append("I")
-                        elif self.v == 6:
-                            if pass_result == "C" or pass_result == "IN":
-                                self.data["result"].append(pass_result)
-                            else:
-                                self.data["result"].append("I")
+                self.play_df_formation(gameId, playId, play_df)
                 
                 if self.all:
                     break
