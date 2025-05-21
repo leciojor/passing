@@ -62,7 +62,7 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
     return train_loader, val_loader
 
 def getting_frames_dataset(game_id, play_id, loaded):
-  loader, dataset = getting_loader(1, save=False, num_workers=0, variant = 5, train_p=0.8, saved=loaded, distr_analysis=False, get_dataset=True, game_id=game_id, play_id=play_id)
+  loader, dataset = getting_loader(1, save=False, num_workers=0, variant = 5, train_p=0.8, saved=loaded, distr_analysis=False, get_dataset=True, game_id=game_id, play_id=play_id, all_frames=True)
   return dataset
 
 def get_acc(y_hat, y, t):

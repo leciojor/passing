@@ -3,9 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from typing import Dict, List, Optional
-from matplotlib.patches import Ellipse
 from matplotlib.patheffects import withStroke
-import matplotlib.patches as patches
 from archs import DeepQBVariant1
 import torch
 from helpers import getting_frames_dataset
@@ -16,6 +14,8 @@ else:
   DEVICE = torch.device("cpu")
 
 MODEL_FILE = "model_variant5_lr_0.01_n_250000.pkl"
+
+RECEIVER_TYPES = ["WR", "TE", "QB", "RB", "FB"]
 
 def get_model_prediction_for_receiver(dataset, receiver, model_file, frameId):
     x = dataset.get_orientation_based_on_receiver(receiver, frameId)
@@ -29,6 +29,9 @@ def get_model_prediction_for_receiver(dataset, receiver, model_file, frameId):
     y_hat = model(x)
     prob = torch.sigmoid(y_hat) 
     return prob.item()
+
+def get_receiver_type():
+    pass
 
 def create_football_field() -> tuple:
     """Create a football field plot."""
@@ -143,7 +146,8 @@ def animate_play(game_id: int, play_id: int,
                 loaded=False) -> None:
     """Animate player tracking data for a specific play."""
 
-    dataset = getting_frames_dataset(game_id, play_id, loaded)
+    # getting dataset for receiver passing completion analysis
+    # dataset = getting_frames_dataset(game_id, play_id, loaded)
     
     # Get data for this play
     play_data = get_play_data(game_id, play_id, df_tracking, df_players, df_plays, df_games)
@@ -250,8 +254,8 @@ def animate_play(game_id: int, play_id: int,
         """Update player positions for each frame."""
         frame_data = play_data[play_data['frameId'] == frame]
         probs = []
-        for receiver in range(5):
-            probs.append(get_model_prediction_for_receiver(dataset, receiver, MODEL_FILE, frame))
+        # for receiver in range(5):
+        #     probs.append(get_model_prediction_for_receiver(dataset, receiver, MODEL_FILE, frame))
 
         # Separate players and football
         players_data = frame_data[
@@ -289,6 +293,9 @@ def animate_play(game_id: int, play_id: int,
                     label_text = '?'
             else:  # position
                 label_text = row['position']
+                # if label_text in RECEIVER_TYPES and not phase == "Pre-snap":
+                #     receiver_type = get_receiver_type(row)
+                #     label_text = probs[receiver_type]
             
             label = ax.text(row['x'] - 10, row['y'], label_text,
                           color='white', ha='center', va='center',

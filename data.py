@@ -99,7 +99,7 @@ class PlaysData(Dataset):
             (self.plays['playId'] == playId)
         ]
 
-        qb_data = play_df[play_df['position'] == 'QB']
+        qb_data = play_df[(play_df['position'] == 'QB') & (play_df["event"] == "forward_pass")]
         
         if self.all: 
             amount_of_qb_frames = len(qb_data)
@@ -117,6 +117,7 @@ class PlaysData(Dataset):
             # getting qb features
             self.data["qb_x"].append(qb_snap['x'])
             self.data["qb_y"].append(qb_snap['y'])
+            # actual shoulder orientation
             self.data["qb_orientation"].append(qb_snap['o'])
             self.data["qb_speed"].append(qb_snap['s'])
             self.data["qb_direction"].append(qb_snap['dir'])
@@ -305,7 +306,7 @@ class PlaysData(Dataset):
         dx = x_receiver - x_qb
         dy = y_receiver - y_qb
 
-        self.data[[frameId]]["qb_direction"] = (np.degrees(np.arctan2(dy, dx))) % 360
+        self.data[[frameId]]["qb_orientation"] = (np.degrees(np.arctan2(dy, dx))) % 360
 
         return torch.tensor(self.data[[frameId]])
 
