@@ -99,8 +99,11 @@ class PlaysData(Dataset):
             (self.plays['playId'] == playId)
         ]
 
-        qb_data = play_df[(play_df['position'] == 'QB') & (play_df["event"] == "forward_pass")]
+        qb_data = play_df[(play_df['position'] == 'QB') & (play_df["event"] == "pass_forward")]
         
+        if qb_data.empty:
+            return False
+
         if self.all: 
             amount_of_qb_frames = len(qb_data)
         else:
@@ -203,6 +206,8 @@ class PlaysData(Dataset):
                         self.data["result"].append(pass_result)
                     else:
                         self.data["result"].append("I")
+            
+        return True
 
 
     def process_plays(self):
@@ -220,7 +225,8 @@ class PlaysData(Dataset):
                     play_i += 1
                     continue
                 
-                self.play_df_formation(gameId, playId, play_df)
+                if not self.play_df_formation(gameId, playId, play_df):
+                    continue
                 
                 if self.all:
                     break
