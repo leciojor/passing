@@ -19,7 +19,7 @@ class PlaysData(Dataset):
         plt.xticks(rotation=45)
         plt.tight_layout()
         plt.savefig(f"./distributions/distr_{col}_{v}.png")
-        plt.show()
+        plt.clf()
 
 
     def __init__(self, variant, data=None, all=False, p=3, i=4, game_id=None, play_id=None):
@@ -325,7 +325,7 @@ class PlaysData(Dataset):
             plt.xticks(rotation=45)
             plt.tight_layout()
             plt.savefig(f"./distributions/distr_receivers_amount_{self.v}")
-            plt.show()
+            plt.clf()
 
 
     def get_orientation_based_on_receiver(self, receiver, frameId):
