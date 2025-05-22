@@ -28,6 +28,7 @@ class PlaysData(Dataset):
         self.p = p
         self.all = all
         self.saved = False
+        self.amounts_receivers = {}
         if data is None:
             self.players = pd.read_csv("data/players.csv")
             self.player_play = pd.read_csv("data/player_play.csv")
@@ -146,7 +147,6 @@ class PlaysData(Dataset):
 
             self.receivers = self.receivers.merge(self.players[['nflId', 'position']], on='nflId', how='left')
             self.sorting_receivers(play_df, ball_frame)
-            self.amounts_receivers = {}
             amount_receivers = len(self.receivers)
             if amount_receivers in self.amounts_receivers:
                 self.amounts_receivers[amount_receivers] +=1
@@ -324,7 +324,7 @@ class PlaysData(Dataset):
             plt.ylabel('Count')
             plt.xticks(rotation=45)
             plt.tight_layout()
-            plt.savefig(f"./distributions/distr_receivers_amount_{self.v}")
+            plt.savefig(f"./distributions/distr_receivers_amount_{self.v}.png")
             plt.clf()
 
 
