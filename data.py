@@ -10,11 +10,24 @@ class PlaysData(Dataset):
     # QB will be removed when exception scenarios are removed/considered
     RECEIVER_TYPES = ["WR", "TE", "QB", "RB", "FB"]
 
+    def plot_distributions(data, col, v):
+        plt.figure(figsize=(6, 4))
+        data[col].value_counts(dropna=False).sort_index().plot(kind='bar')
+        plt.title(f'Distribution of {col} variant {v}')
+        plt.xlabel(col)
+        plt.ylabel('Count')
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.savefig(f"./distributions/distr_{col}_{v}.png")
+        plt.show()
+
+
     def __init__(self, variant, data=None, all=False, p=3, i=4, game_id=None, play_id=None):
         self.i = i
         self.v = variant
         self.p = p
         self.all = all
+        self.saved = False
         if data is None:
             self.players = pd.read_csv("data/players.csv")
             self.player_play = pd.read_csv("data/player_play.csv")
@@ -36,6 +49,7 @@ class PlaysData(Dataset):
 
             self.data = pd.DataFrame.from_dict(self.data)
         else:
+            self.saved = True
             self.data = data
         
         self.length = len(self.data)
@@ -132,9 +146,16 @@ class PlaysData(Dataset):
 
             self.receivers = self.receivers.merge(self.players[['nflId', 'position']], on='nflId', how='left')
             self.sorting_receivers(play_df, ball_frame)
+            self.amounts_receivers = {}
+            amount_receivers = len(self.receivers)
+            if amount_receivers in self.amounts_receivers:
+                self.amounts_receivers[amount_receivers] +=1
+            else:
+                self.amounts_receivers[amount_receivers] = 1
+
 
             for j in range(5):
-                if j < len(self.receivers):
+                if j < amount_receivers:
                     r = self.receivers.iloc[j]
                     rid = r['nflId']
                     r_data = play_df[(play_df['nflId'] == rid) & (play_df["frameId"] == ball_frame)]
@@ -293,15 +314,19 @@ class PlaysData(Dataset):
 
     def distributions_analysis(self):
         for col in self.data.columns:
-            if not pd.api.types.is_numeric_dtype(self.data[col]) or pd.api.types.is_integer_dtype(self.data[col]):
-                plt.figure(figsize=(6, 4))
-                self.data[col].value_counts(dropna=False).sort_index().plot(kind='bar')
-                plt.title(f'Distribution of {col}')
-                plt.xlabel(col)
-                plt.ylabel('Count')
-                plt.xticks(rotation=45)
-                plt.tight_layout()
-                plt.savefig(f"./distributions/distr_{col}.png")
+            if not pd.api.types.is_numeric_dtype(self.data[col]) or pd.api.types.is_integer_dtype(self.data[col]) or col == "result":
+                PlaysData.plot_distributions(self.data, col, self.v)
+        if not self.saved: 
+            plt.figure(figsize=(6, 4))
+            plt.bar(list(self.amounts_receivers), list(self.amounts_receivers.values()))
+            plt.title(f'Distribution of Receivers Amounts variant {self.v}')
+            plt.xlabel("Receivers Amount")
+            plt.ylabel('Count')
+            plt.xticks(rotation=45)
+            plt.tight_layout()
+            plt.savefig(f"./distributions/distr_receivers_amount_{self.v}")
+            plt.show()
+
 
     def get_orientation_based_on_receiver(self, receiver, frameId):
         x_qb = self.data[[frameId]]["qb_x"]
