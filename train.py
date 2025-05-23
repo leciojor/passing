@@ -14,7 +14,7 @@ lr = 0.01
 #training variant 1
 
 train_loader, val_loader, dataset = getting_loader(16, save=False, num_workers=0, variant = 1, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True, drop_qb_orientation=True)
-net = DeepQBVariant1(input_dim=dataset.col_size - 1, output_dim=1)
+net = DeepQBVariant1(input_dim=dataset.col_size - 1, output_dim=5)
 optimizer = torch.optim.Adam(lr=lr, params=net.parameters())
 version = f"variant1_lr{lr}_n{n}"
 loss_training, acc_training, loss_val, acc_val = train(net, optimizer, nn.CrossEntropyLoss(), train_loader, val_loader, n, 1000, 1000, None, version, t=1, pretrained=False)
@@ -23,7 +23,7 @@ plotting(version, loss_training, acc_training, loss_val, acc_val)
 #training variant 1 with shoulder orientation
 
 train_loader, val_loader, dataset = getting_loader(16, save=False, num_workers=0, variant = 1, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True, drop_qb_orientation=False)
-net = DeepQBVariant1(input_dim=dataset.col_size - 1, output_dim=1)
+net = DeepQBVariant1(input_dim=dataset.col_size - 1, output_dim=5)
 optimizer = torch.optim.Adam(lr=lr, params=net.parameters())
 version = f"variant1_lr{lr}_n{n}_with shoulder orientation"
 loss_training, acc_training, loss_val, acc_val = train(net, optimizer, nn.CrossEntropyLoss(), train_loader, val_loader, n, 1000, 1000, None, version, t=1, pretrained=False)
