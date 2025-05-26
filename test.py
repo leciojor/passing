@@ -16,15 +16,20 @@ def getting_results_distribution():
 
     for filename in os.listdir("models"):
         variant = int(re.search(r'variant(\d+)', filename).group(1))
-        print(variant)
-        train_loader, val_loader, dataset = getting_loader(16, save=False, num_workers=0, variant = variant, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True)
+        if variant == 2:
+            continue
+
+        drop = not  "shoulder" in filename and variant == 1
+        train_loader, val_loader, dataset = getting_loader(16, save=False, num_workers=0, variant = variant, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True, drop_qb_orientation=drop)
 
         file_path = os.path.join("models", filename)
         state = torch.load(file_path, map_location=DEVICE)
-        if variant == 5:
+        if variant == 5 or variant == 2:
             output_dim = 1
-        else:
-            output_dim = 3
+        elif variant == 1:
+            output_dim = 5
+        elif variant == 6:
+            output_dim=3
         model = DeepQBVariant1(input_dim=dataset.col_size - output_dim, output_dim=output_dim)
         model.load_state_dict(state)
         model.eval()
@@ -33,12 +38,13 @@ def getting_results_distribution():
         with torch.no_grad():
             for x, y in val_loader:
                 y_hat = model(x)
-                if variant == 5:
+                if variant == 5 or variant == 3:
                     probs = torch.sigmoid(y_hat) 
                     preds = (probs >= 0.5)
-                elif variant == 6:
+                elif variant == 6 or variant == 1:
                     probs = torch.softmax(y_hat, dim=1)
                     preds = torch.argmax(probs, dim=1)
+
                 predictions.extend(preds.cpu().numpy().flatten().tolist())
 
         counter = Counter(predictions)
@@ -54,6 +60,8 @@ def getting_results_distribution():
         plt.savefig(f"distributions/models/distribution_variant{variant}_model {filename}.png")
         plt.show()
 
+def shoulder_orientation_feature_correlation_analysis():
+    train_loader, val_loader, dataset = getting_loader(1, save=False, num_workers=0, variant = 1, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True, drop_qb_orientation=False, cleaning=False)
 
 
 def getting_time_series_analysis_binary_classification(model_file, i=4):
@@ -86,7 +94,7 @@ def getting_time_series_analysis_multi_class_classification(model_file):
 def getting_time_series_analysis_for_each_receiver(model_file):
     pass
 
-# getting_results_distribution()
+getting_results_distribution()
 
 # for filename in os.listdir("models"):
 #     file_path = os.path.join("models", filename)

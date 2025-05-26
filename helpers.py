@@ -13,7 +13,7 @@ if torch.cuda.is_available():
 else:
   DEVICE = torch.device("cpu")
 
-def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=True, i=4, play_id=None, game_id=None):
+def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=True, i=4, play_id=None, game_id=None, cleaning=True):
     if not saved:
         dataset = PlaysData(variant, all = all_frames, i=i)
         if save:
@@ -29,15 +29,16 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
     if distr_analysis:
       dataset.distributions_analysis()
 
-    print(f"**BEFORE CLEANING** Dataset size: {n}")
-    dataset.converting_numerical_and_cleaning()
-    if save:
-        if all_frames:
-          dataset.get_csv(name = f"./finalFeatures/final_data_variant{variant}_{all_frames}_instance{i}_cleaned.csv")
-        else:
-          dataset.get_csv(name = f"./finalFeatures/final_data_variant{variant}_{all_frames}_cleaned.csv")
-    n_clean = len(dataset)
-    print(f"**AFTER CLEANING** Dataset size: {n_clean}")
+    if cleaning:
+      print(f"**BEFORE CLEANING** Dataset size: {n}")
+      dataset.converting_numerical_and_cleaning()
+      if save:
+          if all_frames:
+            dataset.get_csv(name = f"./finalFeatures/final_data_variant{variant}_{all_frames}_instance{i}_cleaned.csv")
+          else:
+            dataset.get_csv(name = f"./finalFeatures/final_data_variant{variant}_{all_frames}_cleaned.csv")
+      n_clean = len(dataset)
+      print(f"**AFTER CLEANING** Dataset size: {n_clean}")
 
     if drop_qb_orientation:
        dataset.data = dataset.data.drop("qb_orientation", axis=1)
