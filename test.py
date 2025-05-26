@@ -5,6 +5,8 @@ from collections import Counter
 from helpers import getting_loader
 from archs import DeepQBVariant1
 import re
+import seaborn as sns
+import numpy as np
 
 if torch.cuda.is_available():
   DEVICE = torch.device("cuda")
@@ -61,12 +63,48 @@ def getting_results_distribution():
         plt.show()
 
 def shoulder_orientation_feature_correlation_analysis():
-    train_loader, val_loader, dataset = getting_loader(1, save=False, num_workers=0, variant = 1, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True, drop_qb_orientation=False, cleaning=False)
+    loader, dataset = getting_loader(1, save=False, num_workers=0, variant = 1, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True, drop_qb_orientation=False, cleaning=False, split=False)
+    dataset.data.dropna(subset=['result', 'qb_x', 'qb_y', 'x_0', 'x_1', 'x_2', 'x_3', 'x_4', 'y_0', 'y_1', 'y_2', 'y_3', 'y_4'], inplace=True)
+    n = len(dataset.data)
+    orientation = dataset.data["qb_orientation"]
+    projected_orientations = []
+    differences = []
+    for i in range(n):
+        row = dataset.data.iloc[i]
+        receiver = int(row["result"])
+        x_qb = row["qb_x"]
+        y_qb = row["qb_y"]
+        x_receiver = row[f"x_{receiver}"]
+        y_receiver = row[f"y_{receiver}"]
 
+        dx = x_receiver - x_qb
+        dy = y_receiver - y_qb
+
+        projected = (np.degrees(np.arctan2(dy, dx))) % 360
+        projected_orientations.append(projected)
+        qb_orientation = row["qb_orientation"]
+        differences.append(abs(projected - qb_orientation))
+
+
+
+    plt.figure(figsize=(8, 6))
+    plt.hexbin(list(orientation), projected_orientations, gridsize=60, cmap='viridis', mincnt=1)
+    plt.colorbar(label='Counts')
+    plt.xlabel("QB ACTUAL orientation")
+    plt.ylabel("QB projected orientation based on intended Receiver")
+    plt.title(f"Analysis of QB orientation and projected orientation based on intented receiver")
+    plt.tight_layout()
+    plt.show()
+
+    plt.figure(figsize=(8, 5))
+    sns.histplot(differences, bins=100, kde=True)
+    plt.title("Diffences between QB actual orientation and QB projected orientation")
+    plt.xlabel("Angular Difference")
+    plt.show()
 
 def getting_time_series_analysis_binary_classification(model_file, i=4):
     variant = 5
-    loader, dataset = getting_loader(1, save=False, num_workers=0, variant = variant, train_p=0.8, saved=False, distr_analysis=False, get_dataset=True, all_frames=True, i=i)
+    loader, dataset = getting_loader(1, save=False, num_workers=0, variant = variant, train_p=0.8, saved=False, distr_analysis=False, get_dataset=True, all_frames=True, i=i, split=False)
     state = torch.load(model_file, map_location=DEVICE)
     output_dim = 1
     model = DeepQBVariant1(input_dim=dataset.col_size - output_dim, output_dim=output_dim)
@@ -94,7 +132,7 @@ def getting_time_series_analysis_multi_class_classification(model_file):
 def getting_time_series_analysis_for_each_receiver(model_file):
     pass
 
-getting_results_distribution()
+shoulder_orientation_feature_correlation_analysis()
 
 # for filename in os.listdir("models"):
 #     file_path = os.path.join("models", filename)

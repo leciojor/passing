@@ -13,7 +13,7 @@ if torch.cuda.is_available():
 else:
   DEVICE = torch.device("cpu")
 
-def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=True, i=4, play_id=None, game_id=None, cleaning=True):
+def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=True, i=4, play_id=None, game_id=None, cleaning=True, split=True):
     if not saved:
         dataset = PlaysData(variant, all = all_frames, i=i)
         if save:
@@ -38,16 +38,17 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
           else:
             dataset.get_csv(name = f"./finalFeatures/final_data_variant{variant}_{all_frames}_cleaned.csv")
       n_clean = len(dataset)
+      n = n_clean
       print(f"**AFTER CLEANING** Dataset size: {n_clean}")
 
     if drop_qb_orientation:
        dataset.data = dataset.data.drop("qb_orientation", axis=1)
        dataset.col_size = dataset.data.shape[1]
 
-    if not all_frames:
-      train_amount = int(n_clean*train_p)
+    if split:
+      train_amount = int(n*train_p)
       train_indices = list(range(train_amount + 1))
-      val_indices = list(range(train_amount + 1, n_clean))
+      val_indices = list(range(train_amount + 1, n))
 
       train_dataset = Subset(dataset, train_indices)
       val_dataset = Subset(dataset, val_indices)
