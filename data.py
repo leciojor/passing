@@ -115,17 +115,19 @@ class PlaysData(Dataset):
         ]
 
         qb_data = play_df[(play_df['position'] == 'QB') & (play_df["event"] == "pass_forward")]
-        
+        qb_data = qb_data.sort_values('frameId')
+        self.qb_data = qb_data
         if qb_data.empty:
             return False
 
         if self.all: 
-            amount_of_qb_frames = len(qb_data)
+            qb_frames_start, qb_frames_end = self.get_frames_indexes()
         else:
-            amount_of_qb_frames = 1
+            qb_frames_start = 0
+            qb_frames_end = 1
         
         # iteration over play qb frames
-        for i in range(amount_of_qb_frames):
+        for i in range(qb_frames_start, qb_frames_end):
             if not self.all:
                 i = -1
 
@@ -230,6 +232,11 @@ class PlaysData(Dataset):
             
         return True
 
+    def get_frames_indexes(self):
+        qb_frames_start = self.qb_data[self.qb_data["event"] == "ball_snap"].index[0] + 1
+        qb_frames_end = self.qb_data[self.qb_data["event"] == "pass_forward"].index[0] + 1
+
+        return qb_frames_start, qb_frames_end
 
     def process_plays(self):
         #iteration over all tracking... csvs
