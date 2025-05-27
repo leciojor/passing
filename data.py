@@ -114,7 +114,11 @@ class PlaysData(Dataset):
             (self.plays['playId'] == playId)
         ]
 
-        qb_data = play_df[(play_df['position'] == 'QB') & (play_df["event"] == "pass_forward")]
+        if not self.all:
+            qb_data = play_df[(play_df['position'] == 'QB') & (play_df["event"] == "pass_forward")]
+        else:
+            qb_data = play_df[(play_df['position'] == 'QB')]
+
         qb_data = qb_data.sort_values('frameId')
         self.qb_data = qb_data
         if qb_data.empty:
@@ -233,6 +237,7 @@ class PlaysData(Dataset):
         return True
 
     def get_frames_indexes(self):
+        self.qb_data.reset_index(inplace=True)
         qb_frames_start = self.qb_data[self.qb_data["event"] == "ball_snap"].index[0] + 1
         qb_frames_end = self.qb_data[self.qb_data["event"] == "pass_forward"].index[0] + 1
 
@@ -240,7 +245,7 @@ class PlaysData(Dataset):
 
     def process_plays(self):
         #iteration over all tracking... csvs
-        week_df_i = 0
+        self.week_df_i = 0
         play_i = 0 
         for week_df in tqdm(self.tracking):
             week_df = week_df.merge(self.players[['nflId', 'position']], on='nflId', how='left')
@@ -248,6 +253,8 @@ class PlaysData(Dataset):
 
             #iteration over all plays 
             for (gameId, playId), play_df in merged.groupby(['gameId', 'playId']):
+                self.gameId = gameId
+                self.playId = playId
                 
                 if self.all and play_i != self.i:
                     play_i += 1
@@ -262,7 +269,7 @@ class PlaysData(Dataset):
             if self.all:
                 break
 
-        week_df_i += 1  
+        self.week_df_i += 1  
 
     def sorting_receivers(self, play_df, ball_frame):
         frame = play_df[play_df['frameId'] == ball_frame]
