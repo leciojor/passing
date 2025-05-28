@@ -63,7 +63,7 @@ def getting_results_distribution():
         plt.show()
 
 def shoulder_orientation_feature_correlation_analysis():
-    loader, dataset = getting_loader(1, save=False, num_workers=0, variant = 1, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True, drop_qb_orientation=False, cleaning=False, split=False, passed_result_extra=True)
+    loader, dataset = getting_loader(1, save=False, num_workers=0, variant = 1, train_p=0.8, saved=False, distr_analysis=False, get_dataset=True, drop_qb_orientation=False, cleaning=False, split=False, passed_result_extra=True)
     dataset.data.dropna(subset=['result', 'qb_x', 'qb_y', 'x_0', 'x_1', 'x_2', 'x_3', 'x_4', 'y_0', 'y_1', 'y_2', 'y_3', 'y_4'], inplace=True)
     n = len(dataset.data)
     orientation = []
