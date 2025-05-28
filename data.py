@@ -22,9 +22,10 @@ class PlaysData(Dataset):
         plt.clf()
 
 
-    def __init__(self, variant, data=None, all=False, p=3, i=4, game_id=None, play_id=None):
+    def __init__(self, variant, data=None, all=False, p=3, i=4, game_id=None, play_id=None, passed_result_extra=False):
         self.i = i
         self.v = variant
+        self.passed_extra = passed_result_extra
         self.p = p
         self.all = all
         self.saved = False
@@ -92,6 +93,8 @@ class PlaysData(Dataset):
         self.data["amount_of_players_causing_pressure_on_qb"] = []
 
         self.data["result"] = []
+        if self.passed_extra:
+            self.data["passResultExtra"] = []
     
     def process_frames_of_play(self):
 
@@ -215,7 +218,8 @@ class PlaysData(Dataset):
                     amount_causing_pressure += 1
 
             self.data["amount_of_players_causing_pressure_on_qb"].append(amount_causing_pressure)
-
+            if self.passed_extra:
+                self.data["passResultExtra"].append(play_info.iloc[0]['passResult'])
             if self.v == 1 or self.v == 4:
                 self.data["result"].append(targetedReceiver)
             elif self.v == 2:

@@ -13,16 +13,16 @@ if torch.cuda.is_available():
 else:
   DEVICE = torch.device("cpu")
 
-def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=True, i=4, play_id=None, game_id=None, cleaning=True, split=True):
+def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=True, i=4, play_id=None, game_id=None, cleaning=True, split=True, passed_result_extra = False):
     if not saved:
-        dataset = PlaysData(variant, all = all_frames, i=i)
+        dataset = PlaysData(variant, all = all_frames, i=i, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra)
         if save:
             dataset.get_csv()
     else:
         if all_frames:
-            dataset = PlaysData(variant, pd.read_csv(f"./finalFeatures/final_data_variant{variant}_{all_frames}_instance{i}.csv"), all = all_frames, i=i, game_id=game_id, play_id=play_id)
+            dataset = PlaysData(variant, pd.read_csv(f"./finalFeatures/final_data_variant{variant}_{all_frames}_instance{i}.csv"), all = all_frames, i=i, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra)
         else:
-          dataset = PlaysData(variant, pd.read_csv(f"./finalFeatures/final_data_variant{variant}_{all_frames}.csv"), all = all_frames, i=i)
+          dataset = PlaysData(variant, pd.read_csv(f"./finalFeatures/final_data_variant{variant}_{all_frames}.csv"), all = all_frames, i=i, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra)
 
     n = len(dataset)
 
