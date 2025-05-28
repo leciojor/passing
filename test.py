@@ -63,10 +63,10 @@ def getting_results_distribution():
         plt.show()
 
 def shoulder_orientation_feature_correlation_analysis():
-    loader, dataset = getting_loader(1, save=False, num_workers=0, variant = 1, train_p=0.8, saved=False, distr_analysis=False, get_dataset=True, drop_qb_orientation=False, cleaning=False, split=False, passed_result_extra=True)
+    loader, dataset = getting_loader(1, save=True, num_workers=0, variant = 1, train_p=0.8, saved=False, distr_analysis=False, get_dataset=True, drop_qb_orientation=False, cleaning=False, split=False, passed_result_extra=True)
     dataset.data.dropna(subset=['result', 'qb_x', 'qb_y', 'x_0', 'x_1', 'x_2', 'x_3', 'x_4', 'y_0', 'y_1', 'y_2', 'y_3', 'y_4'], inplace=True)
     n = len(dataset.data)
-    orientation = dataset.data["qb_orientation"]
+    orientation = []
     projected_orientations = []
     differences = []
     for i in range(n):
@@ -85,22 +85,25 @@ def shoulder_orientation_feature_correlation_analysis():
             projected = (np.degrees(np.arctan2(dy, dx))) % 360
             projected_orientations.append(projected)
             qb_orientation = row["qb_orientation"]
+            orientation.append(qb_orientation)
             differences.append(abs(projected - qb_orientation))
 
 
     plt.figure(figsize=(8, 6))
-    plt.hexbin(list(orientation), projected_orientations, gridsize=60, cmap='viridis', mincnt=1)
+    plt.hexbin(orientation, projected_orientations, gridsize=60, cmap='viridis', mincnt=1)
     plt.colorbar(label='Counts')
     plt.xlabel("QB ACTUAL orientation")
     plt.ylabel("QB projected orientation based on intended Receiver")
     plt.title(f"Analysis of QB orientation and projected orientation based on intented receiver")
     plt.tight_layout()
+    plt.savefig("moreAnalysis/actualOrientationVsProjected.png")
     plt.show()
 
     plt.figure(figsize=(8, 5))
     sns.histplot(differences, bins=100, kde=True)
     plt.title("Diffences between QB actual orientation and QB projected orientation")
     plt.xlabel("Angular Difference")
+    plt.savefig("moreAnalysis/angularDifference.png")
     plt.show()
 
 def getting_time_series_analysis_binary_classification(model_file, i=4):
@@ -126,6 +129,34 @@ def getting_time_series_analysis_binary_classification(model_file, i=4):
     plt.savefig(f"timeseries/timeseries_analysis_model{model_file[-20:]}instance {i}.png")
     plt.show()
 
+def further_analysis_results_variant_two(file_path):
+        loader, dataset = getting_loader(1, save=False, num_workers=0, variant = 2, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True, drop_qb_orientation=False, split=False)
+
+        state = torch.load(file_path, map_location=DEVICE)
+        output_dim = 1
+        model = DeepQBVariant1(input_dim=dataset.col_size - output_dim, output_dim=output_dim)
+        model.load_state_dict(state)
+        model.eval()
+
+        results = []
+        actual_gained_yards = []
+
+        for x, y in loader:
+            y_hat = model(x)
+            results.append(y_hat.squeeze().item())
+            actual_gained_yards.append(y.squeeze().item())
+
+        plt.figure(figsize=(8, 6))
+        plt.hexbin(actual_gained_yards, results, gridsize=60, cmap='viridis', mincnt=1)
+        plt.colorbar(label='Counts')
+        plt.xlabel("Actual Yards Gained")
+        plt.ylabel("Model Predicted Yards Gained")
+        plt.title(f"Variant 2 results")
+        plt.tight_layout()
+        plt.savefig("moreAnalysis/variant2Results.png")
+        plt.show()
+
+
 
 def getting_time_series_analysis_multi_class_classification(model_file):
     pass
@@ -134,6 +165,7 @@ def getting_time_series_analysis_for_each_receiver(model_file):
     pass
 
 shoulder_orientation_feature_correlation_analysis()
+further_analysis_results_variant_two("models/model_variant2_lr0.01_n250000.pkl")
 
 # for filename in os.listdir("models"):
 #     file_path = os.path.join("models", filename)
