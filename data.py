@@ -225,7 +225,7 @@ class PlaysData(Dataset):
             self.data["amount_of_players_causing_pressure_on_qb"].append(amount_causing_pressure)
             self.data["yardsToGo"].append(play_df.iloc[0]["yardsToGo"].item())
             self.data["down"].append(play_df.iloc[0]["down"].item())
-            self.data["yardlineNumber"].append(play_df.iloc[0]["yardlineNumber"].item())
+            self.data["yardLine"].append(play_df.iloc[0]["yardlineNumber"].item())
 
             if self.passed_extra:
                 self.data["passResultExtra"].append(play_info.iloc[0]['passResult'].item())
