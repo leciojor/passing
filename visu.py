@@ -147,7 +147,7 @@ def animate_play(game_id: int, play_id: int,
     """Animate player tracking data for a specific play."""
 
     # getting dataset for receiver passing completion analysis
-    dataset = getting_frames_dataset(game_id, play_id, loaded)
+    dataset = getting_frames_dataset(game_id, play_id, loaded, False)
     
     # Get data for this play
     play_data = get_play_data(game_id, play_id, df_tracking, df_players, df_plays, df_games)
@@ -370,7 +370,7 @@ def main():
     #    3980, 4012
     
     print(f"Animating game {game_id}, play {play_id}...")
-    animate_play(game_id, play_id, df_tracking, df_players, df_plays, df_games, show_labels='position', loaded=False)
+    animate_play(game_id, play_id, df_tracking, df_players, df_plays, df_games, show_labels='position', loaded=True)
 
 if __name__ == "__main__":
     main() 
