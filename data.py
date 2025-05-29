@@ -219,14 +219,13 @@ class PlaysData(Dataset):
 
             self.data["amount_of_players_causing_pressure_on_qb"].append(amount_causing_pressure)
             if self.passed_extra:
-                self.data["passResultExtra"].append(play_info.iloc[0]['passResult'])
+                self.data["passResultExtra"].append(play_info.iloc[0]['passResult'].item())
             if self.v == 1 or self.v == 4:
                 self.data["result"].append(targetedReceiver)
             elif self.v == 2:
-                play_row = play_df[(play_df["gameId"] == gameId) & (play_df['playId'] == playId)]
-                self.data["result"].append(play_row['dis'].sum())
+                self.data["result"].append(play_df.iloc[0]['yardsGained'].item())
             elif self.v == 3 or self.v == 5 or self.v == 6:
-                pass_result = play_info.iloc[0]['passResult']
+                pass_result = play_info.iloc[0]['passResult'].item()
                 if self.v == 5 or self.v == 3:
                     if pass_result == "C":
                         self.data["result"].append("C")
