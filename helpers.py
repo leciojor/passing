@@ -181,4 +181,4 @@ def plotting(version, loss_training, acc_training, loss_val, acc_val):
 # getting_loader(1, save=True, num_workers=2, variant = 3, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, i=4, play_id=None, game_id=None)
 # getting_loader(1, save=True, num_workers=2, variant = 5, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, i=4, play_id=None, game_id=None)
 # getting_loader(1, save=True, num_workers=2, variant = 6, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, i=4, play_id=None, game_id=None)
-getting_frames_dataset(2022091200, 180, False, True, beta=False)
+getting_frames_dataset(2022091200, 109, False, True, beta=False)
