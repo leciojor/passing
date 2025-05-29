@@ -63,8 +63,8 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
       return train_loader, val_loader, dataset
     return train_loader, val_loader
 
-def getting_frames_dataset(game_id, play_id, loaded, beta=False):
-  loader, dataset = getting_loader(1, save=False, num_workers=0, variant = 5, train_p=0.8, saved=loaded, distr_analysis=False, get_dataset=True, game_id=game_id, play_id=play_id, all_frames=True, beta=beta)
+def getting_frames_dataset(game_id, play_id, loaded, save, beta=False):
+  loader, dataset = getting_loader(1, save=save, num_workers=0, variant = 5, train_p=0.8, saved=loaded, distr_analysis=False, get_dataset=True, game_id=game_id, play_id=play_id, all_frames=True, beta=beta, split=False)
   return dataset
 
 def get_acc(y_hat, y, t):
@@ -175,9 +175,10 @@ def plotting(version, loss_training, acc_training, loss_val, acc_val):
   plot_(f"Loss Validation {version}", loss_val, "Loss", val=True)
   plot_(f"Accuracy Validation {version}", acc_val, "Accuracy", val=True)
 
-getting_loader(1, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = True, get_dataset=False, all_frames=False, distr_analysis=False, i=4, play_id=None, game_id=None)
-getting_loader(1, save=True, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, i=4, play_id=None, game_id=None)
-getting_loader(1, save=True, num_workers=2, variant = 2, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, i=4, play_id=None, game_id=None)
-getting_loader(1, save=True, num_workers=2, variant = 3, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, i=4, play_id=None, game_id=None)
-getting_loader(1, save=True, num_workers=2, variant = 5, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, i=4, play_id=None, game_id=None)
-getting_loader(1, save=True, num_workers=2, variant = 6, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, i=4, play_id=None, game_id=None)
+# getting_loader(1, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = True, get_dataset=False, all_frames=False, distr_analysis=False, i=4, play_id=None, game_id=None)
+# getting_loader(1, save=True, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, i=4, play_id=None, game_id=None)
+# getting_loader(1, save=True, num_workers=2, variant = 2, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, i=4, play_id=None, game_id=None)
+# getting_loader(1, save=True, num_workers=2, variant = 3, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, i=4, play_id=None, game_id=None)
+# getting_loader(1, save=True, num_workers=2, variant = 5, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, i=4, play_id=None, game_id=None)
+# getting_loader(1, save=True, num_workers=2, variant = 6, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, i=4, play_id=None, game_id=None)
+getting_frames_dataset(2022091200, 180, False, True, beta=False)
