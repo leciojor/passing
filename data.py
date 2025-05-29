@@ -90,7 +90,12 @@ class PlaysData(Dataset):
         self.data["qb_speed"] = []
         self.data["qb_direction"] = []
         self.data["qb_accel"] = []
+
+        # pressure fields
         self.data["amount_of_players_causing_pressure_on_qb"] = []
+        self.data["yardsToGo"] = []
+        self.data["down"] = []
+        self.data["yardLine"] = []
 
         self.data["result"] = []
         if self.passed_extra:
@@ -218,6 +223,10 @@ class PlaysData(Dataset):
                     amount_causing_pressure += 1
 
             self.data["amount_of_players_causing_pressure_on_qb"].append(amount_causing_pressure)
+            self.data["yardsToGo"].append(play_df.iloc[0]["yardsToGo"].item())
+            self.data["down"].append(play_df.iloc[0]["down"].item())
+            self.data["yardlineNumber"].append(play_df.iloc[0]["yardlineNumber"].item())
+
             if self.passed_extra:
                 self.data["passResultExtra"].append(play_info.iloc[0]['passResult'].item())
             if self.v == 1 or self.v == 4:
