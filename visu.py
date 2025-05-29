@@ -13,15 +13,15 @@ if torch.cuda.is_available():
 else:
   DEVICE = torch.device("cpu")
 
-MODEL_FILE = "model_variant5_lr_0.01_n_250000.pkl"
+MODEL_FILE = "models/model_variant5_lr_0.01_n_250000.pkl"
 
 RECEIVER_TYPES = ["WR", "TE", "QB", "RB", "FB"]
 
 def get_model_prediction_for_receiver(dataset, receiver, model_file, frameId):
-    x = dataset.get_orientation_based_on_receiver(receiver, frameId)
+    output_dim = 1
+    x = dataset.get_orientation_based_on_receiver(receiver, frameId, output_dim = 1)
 
     state = torch.load(model_file, map_location=DEVICE)
-    output_dim = 1
     model = DeepQBVariant1(input_dim=dataset.col_size - output_dim, output_dim=output_dim)
     model.load_state_dict(state)
     model.eval()

@@ -175,7 +175,7 @@ def getting_time_series_analysis_for_each_receiver(model_file):
     pass
 
 # shoulder_orientation_feature_correlation_analysis()
-further_analysis_results_variant_two("models/model_variant2_lr0.01_n250000.pkl")
+# further_analysis_results_variant_two("models/model_variant2_lr0.01_n250000.pkl")
 
 # for filename in os.listdir("models"):
 #     file_path = os.path.join("models", filename)

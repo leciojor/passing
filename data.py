@@ -357,18 +357,19 @@ class PlaysData(Dataset):
             plt.clf()
 
 
-    def get_orientation_based_on_receiver(self, receiver, frameId):
-        x_qb = self.data[[frameId]]["qb_x"]
-        y_qb = self.data[[frameId]]["qb_y"]
-        x_receiver = self.data[[frameId]][f"x_{receiver}"]
-        y_receiver = self.data[[frameId]][f"y_{receiver}"]
+    def get_orientation_based_on_receiver(self, receiver, frameId, output_dim):
+        row = self.data.iloc[frameId-1, :-output_dim]
+        x_qb = row["qb_x"]
+        y_qb = row["qb_y"]
+        x_receiver = row[f"x_{receiver}"]
+        y_receiver = row[f"y_{receiver}"]
 
         dx = x_receiver - x_qb
         dy = y_receiver - y_qb
 
-        self.data[[frameId]]["qb_orientation"] = (np.degrees(np.arctan2(dy, dx))) % 360
+        row["qb_orientation"] = (np.degrees(np.arctan2(dy, dx))) % 360
 
-        return torch.tensor(self.data[[frameId]])
+        return torch.tensor(row)
 
     def augmentation(self):
         pass
