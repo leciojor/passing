@@ -150,7 +150,7 @@ def further_analysis_results_variant_two(file_path):
             differences.append(diff.squeeze().item())
 
         plt.figure(figsize=(8, 6))
-        plt.hexbin(actual_gained_yards, results, gridsize=60, cmap='viridis', mincnt=1)
+        plt.hexscatterbin(actual_gained_yards, results, gridsize=60, cmap='viridis', mincnt=1)
         plt.colorbar(label='Counts')
         plt.xlabel("Actual Yards Gained")
         plt.ylabel("Model Predicted Yards Gained")
