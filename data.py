@@ -228,13 +228,13 @@ class PlaysData(Dataset):
             self.data["yardLine"].append(play_df.iloc[0]["yardlineNumber"].item())
 
             if self.passed_extra:
-                self.data["passResultExtra"].append(play_info.iloc[0]['passResult'].item())
+                self.data["passResultExtra"].append(play_info.iloc[0]['passResult'])
             if self.v == 1 or self.v == 4:
                 self.data["result"].append(targetedReceiver)
             elif self.v == 2:
                 self.data["result"].append(play_df.iloc[0]['yardsGained'].item())
             elif self.v == 3 or self.v == 5 or self.v == 6:
-                pass_result = play_info.iloc[0]['passResult'].item()
+                pass_result = play_info.iloc[0]['passResult']
                 if self.v == 5 or self.v == 3:
                     if pass_result == "C":
                         self.data["result"].append("C")
