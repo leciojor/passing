@@ -22,9 +22,10 @@ class PlaysData(Dataset):
         plt.clf()
 
 
-    def __init__(self, variant, data=None, all=False, p=3, i=4, game_id=None, play_id=None, passed_result_extra=False):
+    def __init__(self, variant, data=None, all=False, p=3, i=4, game_id=None, play_id=None, passed_result_extra=False, beta=True):
         self.i = i
         self.v = variant
+        self.beta = beta
         self.passed_extra = passed_result_extra
         self.p = p
         self.all = all
@@ -93,9 +94,10 @@ class PlaysData(Dataset):
 
         # pressure fields
         self.data["amount_of_players_causing_pressure_on_qb"] = []
-        self.data["yardsToGo"] = []
-        self.data["down"] = []
-        self.data["yardLine"] = []
+        if self.beta:
+            self.data["yardsToGo"] = []
+            self.data["down"] = []
+            self.data["yardLine"] = []
 
         self.data["result"] = []
         if self.passed_extra:
@@ -223,9 +225,10 @@ class PlaysData(Dataset):
                     amount_causing_pressure += 1
 
             self.data["amount_of_players_causing_pressure_on_qb"].append(amount_causing_pressure)
-            self.data["yardsToGo"].append(play_df.iloc[0]["yardsToGo"].item())
-            self.data["down"].append(play_df.iloc[0]["down"].item())
-            self.data["yardLine"].append(play_df.iloc[0]["yardlineNumber"].item())
+            if self.beta:
+                self.data["yardsToGo"].append(play_df.iloc[0]["yardsToGo"].item())
+                self.data["down"].append(play_df.iloc[0]["down"].item())
+                self.data["yardLine"].append(play_df.iloc[0]["yardlineNumber"].item())
 
             if self.passed_extra:
                 self.data["passResultExtra"].append(play_info.iloc[0]['passResult'])

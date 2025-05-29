@@ -147,7 +147,7 @@ def animate_play(game_id: int, play_id: int,
     """Animate player tracking data for a specific play."""
 
     # getting dataset for receiver passing completion analysis
-    # dataset = getting_frames_dataset(game_id, play_id, loaded)
+    dataset = getting_frames_dataset(game_id, play_id, loaded)
     
     # Get data for this play
     play_data = get_play_data(game_id, play_id, df_tracking, df_players, df_plays, df_games)
@@ -254,8 +254,8 @@ def animate_play(game_id: int, play_id: int,
         """Update player positions for each frame."""
         frame_data = play_data[play_data['frameId'] == frame]
         probs = []
-        # for receiver in range(5):
-        #     probs.append(get_model_prediction_for_receiver(dataset, receiver, MODEL_FILE, frame))
+        for receiver in range(5):
+            probs.append(get_model_prediction_for_receiver(dataset, receiver, MODEL_FILE, frame))
 
         # Separate players and football
         players_data = frame_data[
@@ -293,9 +293,9 @@ def animate_play(game_id: int, play_id: int,
                     label_text = '?'
             else:  # position
                 label_text = row['position']
-                # if label_text in RECEIVER_TYPES and not phase == "Pre-snap":
-                #     receiver_type = get_receiver_type(row)
-                #     label_text = probs[receiver_type]
+                if label_text in RECEIVER_TYPES and not phase == "Pre-snap":
+                    receiver_type = get_receiver_type(row)
+                    label_text = probs[receiver_type]
             
             label = ax.text(row['x'] - 10, row['y'], label_text,
                           color='white', ha='center', va='center',
