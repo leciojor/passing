@@ -19,10 +19,16 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
         if save:
             dataset.get_csv()
     else:
-        if all_frames:
-            dataset = PlaysData(variant, pd.read_csv(f"./finalFeatures/final_data_variant{variant}_{all_frames}_instance{i}.csv"), all = all_frames, i=i, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra, beta=beta)
+      
+        if not beta:
+           file_name = f"./finalFeatures/datasetsAlpha/final_data_variant{variant}_{all_frames}"
         else:
-          dataset = PlaysData(variant, pd.read_csv(f"./finalFeatures/final_data_variant{variant}_{all_frames}.csv"), all = all_frames, i=i, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra, beta=beta)
+            file_name = f"./finalFeatures/final_data_variant{variant}_{all_frames}"     
+      
+        if all_frames:
+            dataset = PlaysData(variant, pd.read_csv(file_name + f"_instance{i}.csv"), all = all_frames, i=i, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra, beta=beta)
+        else:
+          dataset = PlaysData(variant, pd.read_csv(file_name + ".csv"), all = all_frames, i=i, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra, beta=beta)
 
     n = len(dataset)
 
