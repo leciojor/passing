@@ -13,7 +13,7 @@ if torch.cuda.is_available():
 else:
   DEVICE = torch.device("cpu")
 
-MODEL_FILE = "models/model_variant5_lr_0.01_n_250000.pkl"
+MODEL_FILE = "models/datasetsAlpha/model_variant5_lr_0.01_n_250000.pkl"
 
 RECEIVER_TYPES = ["WR", "TE", "QB", "RB", "FB"]
 
