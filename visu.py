@@ -171,9 +171,9 @@ def animate_play(game_id: int, play_id: int,
     play_data = get_play_data(game_id, play_id, df_tracking, df_players, df_plays, df_games)
 
     # getting qb frames
+    INDEX = 0
     qb_frames_start, qb_frames_end = get_frames_indexes(play_data)
     range_set = set(list(range(qb_frames_start, qb_frames_end+1)))
-    INDEX = 0
     
     # Get play phases
     phases = get_play_phases(play_data)
@@ -283,7 +283,6 @@ def animate_play(game_id: int, play_id: int,
             phase = "Post-snap"
         if 'end' in phases and frame >= phases['end']:
             phase = "Play Complete"
-
 
         # only getting probabilities for when the qb got the ball in hands
         probs = []
@@ -399,7 +398,7 @@ def main():
     #    3980, 4012
     
     print(f"Animating game {game_id}, play {play_id}...")
-    animate_play(game_id, play_id, df_tracking, df_players, df_plays, df_games, show_labels='position', loaded=False, save=True)
+    animate_play(game_id, play_id, df_tracking, df_players, df_plays, df_games, show_labels='position', loaded=True, save=False)
 
 if __name__ == "__main__":
     main() 

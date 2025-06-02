@@ -379,13 +379,7 @@ class PlaysData(Dataset):
     def augmentation(self):
         pass
 
-    def get_csv(self, name=False):
-        if not name:
-            if self.all:
-                name = f"./finalFeatures/final_data_variant{self.v}_{self.all}_instance{self.i}.csv"
-            else:
-                name = f"./finalFeatures/final_data_variant{self.v}_{self.all}.csv"
-
+    def get_csv(self, name):
         self.data.to_csv(name, index=False)
 
 
