@@ -34,14 +34,14 @@ def get_frames_indexes(play_data):
     play_data.reset_index(inplace=True)
     play_data = play_data.sort_values('frameId')
     ball_snap_data = play_data[play_data["event"] == "ball_snap"]
-    pass_forward_data = play_data[play_data["event"] == "ball_snap"]
+    pass_forward_data = play_data[play_data["event"] == "pass_forward"]
     
     qb_frames_start = None
     qb_frames_end = None
     if len(ball_snap_data):
-        qb_frames_start = play_data[play_data["event"] == "ball_snap"].iloc[0]["frameId"] + 1
+        qb_frames_start = ball_snap_data.iloc[0]["frameId"] + 1
     if len(pass_forward_data):
-        qb_frames_end = play_data[play_data["event"] == "pass_forward"].iloc[0]["frameId"] + 1
+        qb_frames_end = pass_forward_data.iloc[0]["frameId"] + 1
 
     return qb_frames_start, qb_frames_end
 
