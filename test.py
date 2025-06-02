@@ -82,11 +82,19 @@ def shoulder_orientation_feature_correlation_analysis():
             dx = x_receiver - x_qb
             dy = y_receiver - y_qb
 
-            projected = (np.degrees(np.arctan2(dy, dx))) % 360
+            projected = (90 - np.degrees(np.arctan2(dy, dx))) % 360
             projected_orientations.append(projected)
             qb_orientation = row["qb_orientation"]
             orientation.append(qb_orientation)
-            differences.append(abs(projected - qb_orientation))
+            diff = abs(projected - qb_orientation)
+            differences.append(diff)
+
+            if diff >= 100 and diff < 300:
+                with open("moreAnalysis/angleAnalysisOutliers.txt", "a") as file:
+                    file.write(f">= 100 and < 300 playId: {row['playId']} - gameId: {row['gameId']} - diff: {diff}\n")
+            if diff >= 300:
+                with open("moreAnalysis/angleAnalysisOutliers.txt", "a") as file:
+                    file.write(f"diff >= 300 playId: {row['playId']} - gameId: {row['gameId']} - diff: {diff}\n")
 
 
     plt.figure(figsize=(8, 6))
@@ -174,7 +182,7 @@ def getting_time_series_analysis_multi_class_classification(model_file):
 def getting_time_series_analysis_for_each_receiver(model_file):
     pass
 
-# shoulder_orientation_feature_correlation_analysis()
+shoulder_orientation_feature_correlation_analysis()
 # further_analysis_results_variant_two("models/model_variant2_lr0.01_n250000.pkl")
 
 # for filename in os.listdir("models"):

@@ -102,6 +102,8 @@ class PlaysData(Dataset):
         self.data["result"] = []
         if self.passed_extra:
             self.data["passResultExtra"] = []
+            self.data["gameId"] = []
+            self.data["playId"] = []
     
     def process_frames_of_play(self):
 
@@ -232,6 +234,8 @@ class PlaysData(Dataset):
 
             if self.passed_extra:
                 self.data["passResultExtra"].append(play_info.iloc[0]['passResult'])
+                self.data["playId"].append(playId)
+                self.data["gameId"].append(gameId)
             if self.v == 1 or self.v == 4:
                 self.data["result"].append(targetedReceiver)
             elif self.v == 2:
@@ -357,8 +361,9 @@ class PlaysData(Dataset):
             plt.clf()
 
 
-    def get_orientation_based_on_receiver(self, receiver, frameId, output_dim):
-        row = self.data.iloc[frameId-1, :-output_dim]
+    def get_orientation_based_on_receiver(self, receiver, index, output_dim):
+        print("frame", index)
+        row = self.data.iloc[index, :-output_dim]
         x_qb = row["qb_x"]
         y_qb = row["qb_y"]
         x_receiver = row[f"x_{receiver}"]
@@ -367,7 +372,7 @@ class PlaysData(Dataset):
         dx = x_receiver - x_qb
         dy = y_receiver - y_qb
 
-        row["qb_orientation"] = (np.degrees(np.arctan2(dy, dx))) % 360
+        row["qb_orientation"] = (90 - np.degrees(np.arctan2(dy, dx))) % 360
 
         return torch.tensor(row)
 

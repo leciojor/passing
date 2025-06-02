@@ -13,13 +13,13 @@ if torch.cuda.is_available():
 else:
   DEVICE = torch.device("cpu")
 
-MODEL_FILE = "models/datasetsAlpha/model_variant5_lr_0.01_n_250000.pkl"
+MODEL_FILE = "models/datasetsAlpha/model_variant5_lr_0.01_n250000.pkl"
 
 RECEIVER_TYPES = ["WR", "TE", "QB", "RB", "FB"]
 
 def get_model_prediction_for_receiver(dataset, receiver, model_file, frameId):
     output_dim = 1
-    x = dataset.get_orientation_based_on_receiver(receiver, frameId, output_dim = 1)
+    x = dataset.get_orientation_based_on_receiver(receiver, frameId, output_dim = 1).float().unsqueeze(0)
 
     state = torch.load(model_file, map_location=DEVICE)
     model = DeepQBVariant1(input_dim=dataset.col_size - output_dim, output_dim=output_dim)
@@ -29,6 +29,21 @@ def get_model_prediction_for_receiver(dataset, receiver, model_file, frameId):
     y_hat = model(x)
     prob = torch.sigmoid(y_hat) 
     return prob.item()
+
+def get_frames_indexes(play_data):
+    play_data.reset_index(inplace=True)
+    play_data = play_data.sort_values('frameId')
+    ball_snap_data = play_data[play_data["event"] == "ball_snap"]
+    pass_forward_data = play_data[play_data["event"] == "ball_snap"]
+    
+    qb_frames_start = None
+    qb_frames_end = None
+    if len(ball_snap_data):
+        qb_frames_start = play_data[play_data["event"] == "ball_snap"].iloc[0]["frameId"] + 1
+    if len(pass_forward_data):
+        qb_frames_end = play_data[play_data["event"] == "pass_forward"].iloc[0]["frameId"] + 1
+
+    return qb_frames_start, qb_frames_end
 
 def get_receiver_type():
     pass
@@ -151,6 +166,11 @@ def animate_play(game_id: int, play_id: int,
     
     # Get data for this play
     play_data = get_play_data(game_id, play_id, df_tracking, df_players, df_plays, df_games)
+
+    # getting qb frames
+    qb_frames_start, qb_frames_end = get_frames_indexes(play_data)
+    range_set = set(list(range(qb_frames_start, qb_frames_end+1)))
+    INDEX = 0
     
     # Get play phases
     phases = get_play_phases(play_data)
@@ -253,9 +273,21 @@ def animate_play(game_id: int, play_id: int,
     def update(frame: int) -> List:
         """Update player positions for each frame."""
         frame_data = play_data[play_data['frameId'] == frame]
+
+        # Update title with play phase
+        phase = "Pre-snap"
+        if 'snap' in phases and frame >= phases['snap']:
+            phase = "Post-snap"
+        if 'end' in phases and frame >= phases['end']:
+            phase = "Play Complete"
+
+
+        # only getting probabilities for when the qb got the ball in hands
         probs = []
-        for receiver in range(5):
-            probs.append(get_model_prediction_for_receiver(dataset, receiver, MODEL_FILE, frame))
+        if frame in range_set:
+            for receiver in range(5):
+                probs.append(get_model_prediction_for_receiver(dataset, receiver, MODEL_FILE, INDEX))
+                INDEX += 1
 
         # Separate players and football
         players_data = frame_data[
@@ -284,6 +316,9 @@ def animate_play(game_id: int, play_id: int,
             label.remove()
         player_labels.clear()
         
+        title.set_text(f"{title_text}\nPhase: {phase}")
+
+        
         for idx, row in players_data.iterrows():
             if show_labels == 'number':
                 try:
@@ -293,7 +328,7 @@ def animate_play(game_id: int, play_id: int,
                     label_text = '?'
             else:  # position
                 label_text = row['position']
-                if label_text in RECEIVER_TYPES and not phase == "Pre-snap":
+                if label_text in RECEIVER_TYPES and frame in range_set:
                     receiver_type = get_receiver_type(row)
                     label_text = probs[receiver_type]
             
@@ -309,16 +344,7 @@ def animate_play(game_id: int, play_id: int,
             football.set_visible(True)
         else:
             football.set_visible(False)
-        
-        # Update title with play phase
-        phase = "Pre-snap"
-        if 'snap' in phases and frame >= phases['snap']:
-            phase = "Post-snap"
-        if 'end' in phases and frame >= phases['end']:
-            phase = "Play Complete"
-        
-        title.set_text(f"{title_text}\nPhase: {phase}")
-        
+                
         # Update event text
         current_event = frame_data['event'].iloc[0] if not frame_data['event'].isna().all() else ""
         if current_event:
