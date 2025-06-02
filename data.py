@@ -367,9 +367,10 @@ class PlaysData(Dataset):
         dx = x_receiver - x_qb
         dy = y_receiver - y_qb
 
+        real_angle = row["qb_orientation"]
         row["qb_orientation"] = (90 - np.degrees(np.arctan2(dy, dx))) % 360
 
-        return torch.tensor(row)
+        return torch.tensor(row), row["qb_orientation"], real_angle
 
     def augmentation(self):
         pass

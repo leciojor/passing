@@ -20,7 +20,7 @@ RECEIVER_TYPES = ["WR", "TE", "QB", "RB", "FB"]
 def get_model_prediction_for_receiver(dataset, receiver, model_file, index):
     try:
         output_dim = 1
-        x = dataset.get_orientation_based_on_receiver(receiver, index, output_dim = 1)
+        x, projected_orientation, real_angle = dataset.get_orientation_based_on_receiver(receiver, index, output_dim = 1)
         x = x.float().unsqueeze(0)
 
         state = torch.load(model_file, map_location=DEVICE)
@@ -30,7 +30,8 @@ def get_model_prediction_for_receiver(dataset, receiver, model_file, index):
 
         y_hat = model(x)
         prob = torch.sigmoid(y_hat) 
-        return prob.item()
+        return prob.item(), projected_orientation, real_angle
+    
     except RuntimeError:
         # ideal would be to change the logic to clean/prepare the data generalizing for all situations
         raise Exception("chosen instance does not have enough data (does not have data for all features used to train the model) e.g. there is no data at all for some defender or something like that to average out")
@@ -43,7 +44,7 @@ def get_frames_indexes(play_data):
         pass_forward_data = play_data[play_data["event"] == "pass_forward"]
 
         qb_frames_start = ball_snap_data.iloc[0]["frameId"] + 1
-        qb_frames_end = pass_forward_data.iloc[0]["frameId"] + 1   
+        qb_frames_end = pass_forward_data.iloc[0]["frameId"]
         
         return qb_frames_start, qb_frames_end
     except IndexError as e:
@@ -173,7 +174,8 @@ def animate_play(game_id: int, play_id: int,
                 show_labels: str = 'number',  # 'number' or 'position'
                 save_path: Optional[str] = None,
                 loaded=False,
-                save=False) -> None:
+                save=False,
+                display_angles=False) -> None:
     """Animate player tracking data for a specific play."""
 
     # getting dataset for receiver passing completion analysis
@@ -189,6 +191,7 @@ def animate_play(game_id: int, play_id: int,
 
     # getting qb frames
     qb_frames_start, qb_frames_end = get_frames_indexes(play_data)
+    print(qb_frames_end-qb_frames_start)
     range_set = set(list(range(qb_frames_start, qb_frames_end+1)))
 
     # Get play phases
@@ -303,7 +306,8 @@ def animate_play(game_id: int, play_id: int,
         probs = []
         if frame in range_set:
             for receiver in range(5):
-                probs.append(get_model_prediction_for_receiver(dataset, receiver, MODEL_FILE, frame - qb_frames_start))
+                prob, projected_angle, real_angle = get_model_prediction_for_receiver(dataset, receiver, MODEL_FILE, frame - qb_frames_start)
+                probs.append(prob)
 
         # Separate players and football
         players_data = frame_data[
