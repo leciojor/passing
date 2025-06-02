@@ -14,19 +14,18 @@ else:
   DEVICE = torch.device("cpu")
 
 def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=True, i=4, play_id=None, game_id=None, cleaning=True, split=True, passed_result_extra = False, beta=True):
+    if not beta:
+        file_name = f"./finalFeatures/datasetsAlpha/final_data_variant{variant}_{all_frames}"
+    else:
+        file_name = f"./finalFeatures/final_data_variant{variant}_{all_frames}"     
+
     if not saved:
         dataset = PlaysData(variant, all = all_frames, i=i, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra, beta=beta)
         if save:
             dataset.get_csv()
-    else:
-      
-        if not beta:
-           file_name = f"./finalFeatures/datasetsAlpha/final_data_variant{variant}_{all_frames}"
-        else:
-            file_name = f"./finalFeatures/final_data_variant{variant}_{all_frames}"     
-      
+    else:      
         if all_frames:
-            dataset = PlaysData(variant, pd.read_csv(file_name + f"_instance{i}.csv"), all = all_frames, i=i, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra, beta=beta)
+            dataset = PlaysData(variant, pd.read_csv(file_name + f"_instance{i}_game{game_id}_play{play_id}.csv"), all = all_frames, i=i, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra, beta=beta)
         else:
           dataset = PlaysData(variant, pd.read_csv(file_name + ".csv"), all = all_frames, i=i, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra, beta=beta)
 
@@ -40,9 +39,9 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
       dataset.converting_numerical_and_cleaning()
       if save:
           if all_frames:
-            dataset.get_csv(name = f"./finalFeatures/final_data_variant{variant}_{all_frames}_instance{i}_cleaned.csv")
+            dataset.get_csv(name = file_name + f"_instance{i}_game{game_id}_play{play_id}_cleaned.csv")
           else:
-            dataset.get_csv(name = f"./finalFeatures/final_data_variant{variant}_{all_frames}_cleaned.csv")
+            dataset.get_csv(name = file_name + f"_cleaned.csv")
       n_clean = len(dataset)
       n = n_clean
       print(f"**AFTER CLEANING** Dataset size: {n_clean}")
@@ -69,8 +68,8 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
       return train_loader, val_loader, dataset
     return train_loader, val_loader
 
-def getting_frames_dataset(game_id, play_id, loaded, save, beta=False):
-  loader, dataset = getting_loader(1, save=save, num_workers=0, variant = 5, train_p=0.8, saved=loaded, distr_analysis=False, get_dataset=True, game_id=game_id, play_id=play_id, all_frames=True, beta=beta, split=False)
+def getting_frames_dataset(game_id, play_id, loaded, save, i, beta=False):
+  loader, dataset = getting_loader(1, save=save, num_workers=0, variant = 5, train_p=0.8, saved=loaded, distr_analysis=False, get_dataset=True, game_id=game_id, i=i, play_id=play_id, all_frames=True, beta=beta, split=False)
   return dataset
 
 def get_acc(y_hat, y, t):

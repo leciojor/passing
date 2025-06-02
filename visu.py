@@ -31,19 +31,20 @@ def get_model_prediction_for_receiver(dataset, receiver, model_file, frameId):
     return prob.item()
 
 def get_frames_indexes(play_data):
-    play_data.reset_index(inplace=True)
-    play_data = play_data.sort_values('frameId')
-    ball_snap_data = play_data[play_data["event"] == "ball_snap"]
-    pass_forward_data = play_data[play_data["event"] == "pass_forward"]
-    
-    qb_frames_start = None
-    qb_frames_end = None
-    if len(ball_snap_data):
-        qb_frames_start = ball_snap_data.iloc[0]["frameId"] + 1
-    if len(pass_forward_data):
-        qb_frames_end = pass_forward_data.iloc[0]["frameId"] + 1
+    try:
+        play_data.reset_index(inplace=True)
+        play_data = play_data.sort_values('frameId')
+        ball_snap_data = play_data[play_data["event"] == "ball_snap"]
+        pass_forward_data = play_data[play_data["event"] == "pass_forward"]
 
-    return qb_frames_start, qb_frames_end
+        qb_frames_start = ball_snap_data.iloc[0]["frameId"] + 1
+        qb_frames_end = pass_forward_data.iloc[0]["frameId"] + 1   
+        
+        return qb_frames_start, qb_frames_end
+    except IndexError as e:
+        raise Exception("Instance does not have qb pass")
+
+
 
 def get_receiver_type():
     pass
@@ -158,11 +159,13 @@ def animate_play(game_id: int, play_id: int,
                 df_games: pd.DataFrame,
                 show_labels: str = 'number',  # 'number' or 'position'
                 save_path: Optional[str] = None,
-                loaded=False) -> None:
+                loaded=False,
+                save=False,
+                i=4) -> None:
     """Animate player tracking data for a specific play."""
 
     # getting dataset for receiver passing completion analysis
-    dataset = getting_frames_dataset(game_id, play_id, loaded, False)
+    dataset = getting_frames_dataset(game_id, play_id, loaded, save, i)
     
     # Get data for this play
     play_data = get_play_data(game_id, play_id, df_tracking, df_players, df_plays, df_games)
@@ -382,7 +385,7 @@ def main():
     
     # Example game and play IDs
     game_id = 2022091200
-    play_id = 180
+    play_id = 201
     #  64,   85,  109,  156,  180,  201,  264,  286,  315,  346,  375,
     #     401,  446,  467,  565,  601,  622,  643,  664,  688,  716,  741,
     #     762,  786,  810,  882,  910,  931,  983, 1004, 1028, 1057, 1092,
@@ -396,7 +399,7 @@ def main():
     #    3980, 4012
     
     print(f"Animating game {game_id}, play {play_id}...")
-    animate_play(game_id, play_id, df_tracking, df_players, df_plays, df_games, show_labels='position', loaded=True)
+    animate_play(game_id, play_id, df_tracking, df_players, df_plays, df_games, show_labels='position', loaded=False, save=True)
 
 if __name__ == "__main__":
     main() 
