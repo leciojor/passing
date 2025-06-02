@@ -17,18 +17,23 @@ MODEL_FILE = "models/datasetsAlpha/model_variant5_lr_0.01_n250000.pkl"
 
 RECEIVER_TYPES = ["WR", "TE", "QB", "RB", "FB"]
 
-def get_model_prediction_for_receiver(dataset, receiver, model_file, frameId):
-    output_dim = 1
-    x = dataset.get_orientation_based_on_receiver(receiver, frameId, output_dim = 1).float().unsqueeze(0)
+def get_model_prediction_for_receiver(dataset, receiver, model_file, index):
+    try:
+        output_dim = 1
+        x = dataset.get_orientation_based_on_receiver(receiver, index, output_dim = 1)
+        x = x.float().unsqueeze(0)
 
-    state = torch.load(model_file, map_location=DEVICE)
-    model = DeepQBVariant1(input_dim=dataset.col_size - output_dim, output_dim=output_dim)
-    model.load_state_dict(state)
-    model.eval()
+        state = torch.load(model_file, map_location=DEVICE)
+        model = DeepQBVariant1(input_dim=dataset.col_size - output_dim, output_dim=output_dim)
+        model.load_state_dict(state)
+        model.eval()
 
-    y_hat = model(x)
-    prob = torch.sigmoid(y_hat) 
-    return prob.item()
+        y_hat = model(x)
+        prob = torch.sigmoid(y_hat) 
+        return prob.item()
+    except RuntimeError:
+        # ideal would be to change the logic to clean/prepare the data generalizing for all situations
+        raise Exception("chosen instance does not have enough data (does not have data for all features used to train the model) e.g. there is no data at all for some defender or something like that to average out")
 
 def get_frames_indexes(play_data):
     try:
@@ -46,8 +51,15 @@ def get_frames_indexes(play_data):
 
 
 
-def get_receiver_type():
-    pass
+def get_receiver_number(receivers, curr_receiver_id, frame_data):
+    receiver_positions = frame_data[frame_data['nflId'].isin(receivers['nflId'])][['nflId', 'y']]
+    receivers = receivers.merge(receiver_positions, on='nflId', how='left')
+    receivers = receivers.sort_values(by='y', ascending=True).head(5)
+    receivers.reset_index(inplace=True)
+    receiver_row = receivers[receivers["nflId"] == curr_receiver_id]
+    if receiver_row.empty:
+        return -1
+    return receiver_row.index[0]
 
 def create_football_field() -> tuple:
     """Create a football field plot."""
@@ -157,24 +169,28 @@ def animate_play(game_id: int, play_id: int,
                 df_players: pd.DataFrame,
                 df_plays: pd.DataFrame,
                 df_games: pd.DataFrame,
+                df_play_players: pd.DataFrame,
                 show_labels: str = 'number',  # 'number' or 'position'
                 save_path: Optional[str] = None,
                 loaded=False,
-                save=False,
-                i=4) -> None:
+                save=False) -> None:
     """Animate player tracking data for a specific play."""
 
     # getting dataset for receiver passing completion analysis
-    dataset = getting_frames_dataset(game_id, play_id, loaded, save, i)
-    
+    dataset = getting_frames_dataset(game_id, play_id, loaded, save)
+
     # Get data for this play
     play_data = get_play_data(game_id, play_id, df_tracking, df_players, df_plays, df_games)
 
+    # getting receivers data
+    df_play_players = df_play_players[(df_play_players['gameId'] == game_id) & (df_play_players['playId'] == play_id)]
+    receivers = df_play_players[df_play_players['routeRan'].notna()].copy()
+    receivers = receivers.merge(df_players[['nflId', 'position']], on='nflId', how='left')
+
     # getting qb frames
-    INDEX = 0
     qb_frames_start, qb_frames_end = get_frames_indexes(play_data)
     range_set = set(list(range(qb_frames_start, qb_frames_end+1)))
-    
+
     # Get play phases
     phases = get_play_phases(play_data)
     
@@ -276,7 +292,6 @@ def animate_play(game_id: int, play_id: int,
     def update(frame: int) -> List:
         """Update player positions for each frame."""
         frame_data = play_data[play_data['frameId'] == frame]
-
         # Update title with play phase
         phase = "Pre-snap"
         if 'snap' in phases and frame >= phases['snap']:
@@ -288,8 +303,7 @@ def animate_play(game_id: int, play_id: int,
         probs = []
         if frame in range_set:
             for receiver in range(5):
-                probs.append(get_model_prediction_for_receiver(dataset, receiver, MODEL_FILE, INDEX))
-                INDEX += 1
+                probs.append(get_model_prediction_for_receiver(dataset, receiver, MODEL_FILE, frame - qb_frames_start))
 
         # Separate players and football
         players_data = frame_data[
@@ -320,7 +334,6 @@ def animate_play(game_id: int, play_id: int,
         
         title.set_text(f"{title_text}\nPhase: {phase}")
 
-        
         for idx, row in players_data.iterrows():
             if show_labels == 'number':
                 try:
@@ -331,8 +344,9 @@ def animate_play(game_id: int, play_id: int,
             else:  # position
                 label_text = row['position']
                 if label_text in RECEIVER_TYPES and frame in range_set:
-                    receiver_type = get_receiver_type(row)
-                    label_text = probs[receiver_type]
+                    receiver_number = get_receiver_number(receivers, row["nflId"], frame_data)
+                    if receiver_number != -1:
+                        label_text = round(probs[receiver_number] * 100, 2) 
             
             label = ax.text(row['x'] - 10, row['y'], label_text,
                           color='white', ha='center', va='center',
@@ -381,10 +395,14 @@ def main():
     
     print("Loading game data...")
     df_games = pd.read_csv('data/games.csv')
+
+    print("Loading game data...")
+    df_play_players = pd.read_csv('data/player_play.csv')
     
     # Example game and play IDs
+    # Have data complete for sure game_id: 2022091200, play_id: 2688:
     game_id = 2022091200
-    play_id = 201
+    play_id = 2688
     #  64,   85,  109,  156,  180,  201,  264,  286,  315,  346,  375,
     #     401,  446,  467,  565,  601,  622,  643,  664,  688,  716,  741,
     #     762,  786,  810,  882,  910,  931,  983, 1004, 1028, 1057, 1092,
@@ -398,7 +416,7 @@ def main():
     #    3980, 4012
     
     print(f"Animating game {game_id}, play {play_id}...")
-    animate_play(game_id, play_id, df_tracking, df_players, df_plays, df_games, show_labels='position', loaded=True, save=False)
+    animate_play(game_id, play_id, df_tracking, df_players, df_plays, df_games, df_play_players, show_labels='position', loaded=True, save=False)
 
 if __name__ == "__main__":
     main() 

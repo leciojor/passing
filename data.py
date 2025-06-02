@@ -22,8 +22,7 @@ class PlaysData(Dataset):
         plt.clf()
 
 
-    def __init__(self, variant, data=None, all=False, p=3, i=4, game_id=None, play_id=None, passed_result_extra=False, beta=True):
-        self.i = i
+    def __init__(self, variant, data=None, all=False, p=3, game_id=None, play_id=None, passed_result_extra=False, beta=True):
         self.v = variant
         self.beta = beta
         self.passed_extra = passed_result_extra
@@ -117,6 +116,7 @@ class PlaysData(Dataset):
                 self.play_df_formation(self.game_id, self.play_id, play_df)
 
     def play_df_formation(self, gameId, playId, play_df):
+
         play_players = self.player_play[
             (self.player_play['gameId'] == gameId) &
             (self.player_play['playId'] == playId)
@@ -170,7 +170,6 @@ class PlaysData(Dataset):
                 self.amounts_receivers[amount_receivers] +=1
             else:
                 self.amounts_receivers[amount_receivers] = 1
-
 
             for j in range(5):
                 if j < amount_receivers:
@@ -274,11 +273,7 @@ class PlaysData(Dataset):
             for (gameId, playId), play_df in merged.groupby(['gameId', 'playId']):
                 self.gameId = gameId
                 self.playId = playId
-                
-                if self.all and play_i != self.i:
-                    play_i += 1
-                    continue
-                
+                                
                 if not self.play_df_formation(gameId, playId, play_df):
                     continue
                 
@@ -320,6 +315,7 @@ class PlaysData(Dataset):
 
         self.data = pd.concat(result_parts, axis=1)
 
+        #probably not a good idea for features like position, velocity
         #filling the rest of nans with the average
         self.data.fillna(self.data.mean(), inplace=True)
 
@@ -362,7 +358,6 @@ class PlaysData(Dataset):
 
 
     def get_orientation_based_on_receiver(self, receiver, index, output_dim):
-        print("frame", index)
         row = self.data.iloc[index, :-output_dim]
         x_qb = row["qb_x"]
         y_qb = row["qb_y"]
