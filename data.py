@@ -165,6 +165,10 @@ class PlaysData(Dataset):
             self.data["qb_accel"].append(qb_snap['a'])
             
             # getting receivers features
+            fields = ['x', 'y', 'vel', 'accel', 'orientation', 'dist_qb', 'receiver_type']
+            if self.get_receiver_id:
+                fields.append('nflId')
+
             targetedReceiver = None
             self.receivers = play_players[play_players['routeRan'].notna()].copy()
 
@@ -214,13 +218,13 @@ class PlaysData(Dataset):
                                 for field in ['x', 'y', 'vel', 'accel', 'orientation']:
                                     self.data[f"defensor_{field}_{j}_{k}"].append(None)
                     else:
-                        for field in ['x', 'y', 'vel', 'accel', 'orientation', 'dist_qb', 'receiver_type', 'nflId']:
+                        for field in fields:
                             self.data[f"{field}_{j}"].append(None)
                         for k in range(2):
                             for field in ['x', 'y', 'vel', 'accel', 'orientation']:
                                 self.data[f"defensor_{field}_{j}_{k}"].append(None)
                 else:
-                    for field in ['x', 'y', 'vel', 'accel', 'orientation', 'dist_qb', 'receiver_type', 'nflId']:
+                    for field in fields:
                         self.data[f"{field}_{j}"].append(None)
                     for k in range(2):
                         for field in ['x', 'y', 'vel', 'accel', 'orientation']:
