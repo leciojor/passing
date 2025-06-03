@@ -13,7 +13,7 @@ if torch.cuda.is_available():
 else:
   DEVICE = torch.device("cpu")
 
-def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=True, play_id=None, game_id=None, cleaning=True, split=True, passed_result_extra = False, beta=True, get_receiver_id=False, intended_receiver_input=False):
+def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=True, play_id=None, game_id=None, cleaning=True, split=True, passed_result_extra = False, beta=True, get_receiver_id=False, intended_receiver_input=False, receiver_to_project=0):
     if not beta:
         file_name = f"./finalFeatures/datasetsAlpha/final_data_variant{variant}_{all_frames}"
     else:
@@ -40,7 +40,7 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
 
     if cleaning:
       print(f"**BEFORE CLEANING** Dataset size: {n}")
-      dataset.converting_numerical_and_cleaning()
+      dataset.converting_numerical_and_cleaning(receiver_to_project)
       if save:
           if all_frames:
             dataset.get_csv(name = file_name + f"_game{game_id}_play{play_id}_cleaned.csv")
@@ -72,8 +72,8 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
       return train_loader, val_loader, dataset
     return train_loader, val_loader
 
-def getting_frames_dataset(game_id, play_id, loaded, save, get_angles, beta=False):
-  loader, dataset = getting_loader(1, save=save, num_workers=0, variant = 5, train_p=0.8, saved=loaded, distr_analysis=False, get_dataset=True, game_id=game_id, play_id=play_id, all_frames=True, beta=beta, split=False, get_receiver_id=get_angles)
+def getting_frames_dataset(game_id, play_id, loaded, save, get_angles, receiver_to_project, beta=False):
+  loader, dataset = getting_loader(1, save=save, num_workers=0, variant = 5, train_p=0.8, saved=loaded, distr_analysis=False, get_dataset=True, game_id=game_id, play_id=play_id, all_frames=True, beta=beta, split=False, get_receiver_id=get_angles, receiver_to_project=receiver_to_project)
   return dataset
 
 def get_acc(y_hat, y, t):

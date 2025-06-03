@@ -305,13 +305,13 @@ class PlaysData(Dataset):
 
         self.receivers = self.receivers.sort_values(by='y', ascending=True).head(5)
         
-    def converting_numerical_and_cleaning(self, r=False):
+    def converting_numerical_and_cleaning(self, r=False, receiver_to_project=0):
         result_parts = []
 
         #removing initial nans (just based on results or x_0)
         drop_subset = ['result', 'x_0']      
         if self.get_receiver_id:
-            drop_subset.append('nflId')
+            drop_subset.append(f'nflId_{receiver_to_project}')
         if self.intended_receiver_input:
             drop_subset.append('intended_receiver')
 
@@ -376,7 +376,7 @@ class PlaysData(Dataset):
 
 
     def get_orientation_based_on_receiver(self, receiver, index, output_dim, x_qb=None, y_qb=None, x_receiver=None, y_receiver=None):
-        if index:
+        if not index is None:
             row = self.data.iloc[index, :-output_dim]
             x_qb = row["qb_x"]
             y_qb = row["qb_y"]
@@ -387,7 +387,7 @@ class PlaysData(Dataset):
         dy = y_receiver - y_qb
         projected_angle = (90 - np.degrees(np.arctan2(dy, dx))) % 360
 
-        if index:
+        if not index is None:
             real_angle = row["qb_orientation"]
             row["qb_orientation"] = projected_angle
 

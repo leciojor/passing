@@ -197,7 +197,9 @@ def animate_play(game_id: int, play_id: int,
     """Animate player tracking data for a specific play."""
 
     # getting dataset for receiver passing completion analysis
-    dataset = getting_frames_dataset(game_id, play_id, loaded, save, display_angles)
+    dataset = getting_frames_dataset(game_id, play_id, loaded, save, False, receiver_to_project)
+    if display_angles:
+        dataset_angles = getting_frames_dataset(game_id, play_id, False, False, True, receiver_to_project)
 
     # Get data for this play
     play_data = get_play_data(game_id, play_id, df_tracking, df_players, df_plays, df_games)
@@ -232,7 +234,7 @@ def animate_play(game_id: int, play_id: int,
     angle_lines = []
     angle_texts = []
     if display_angles:
-        receiver_id = get_receiver_id(dataset, receiver_to_project)
+        receiver_id = get_receiver_id(dataset_angles, receiver_to_project)
         projected_line = ax.plot([], [], 'yellow', linewidth=2, alpha=0.8, label='Projected Angle')[0]
         real_line = ax.plot([], [], 'red', linewidth=2, alpha=0.8, label='Real Angle')[0]
         angle_lines = [projected_line, real_line]
@@ -413,7 +415,7 @@ def animate_play(game_id: int, play_id: int,
                     label_text = str(jersey_num)
                 except (ValueError, TypeError):
                     label_text = '?'
-            else:  # position
+            else: 
                 label_text = row['position']
                 if label_text in RECEIVER_TYPES and frame in range_set:
                     receiver_number = get_receiver_number(receivers, row["nflId"], frame_data)
@@ -493,7 +495,7 @@ def main():
     #    3980, 4012
     
     print(f"Animating game {game_id}, play {play_id}...")
-    animate_play(game_id, play_id, df_tracking, df_players, df_plays, df_games, df_play_players, show_labels='position', loaded=True, save=False, display_angles=True)
+    animate_play(game_id, play_id, df_tracking, df_players, df_plays, df_games, df_play_players, show_labels='position', loaded=False, save=True, display_angles=False)
 
 if __name__ == "__main__":
     main() 
