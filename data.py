@@ -22,8 +22,10 @@ class PlaysData(Dataset):
         plt.clf()
 
 
-    def __init__(self, variant, data=None, all=False, p=3, game_id=None, play_id=None, passed_result_extra=False, beta=True):
+    def __init__(self, variant, data=None, all=False, p=3, game_id=None, play_id=None, passed_result_extra=False, beta=True, get_receiver_id=False, intended_receiver_input=False):
+        self.get_receiver_id = get_receiver_id
         self.v = variant
+        self.intended_receiver_input = intended_receiver_input
         self.beta = beta
         self.passed_extra = passed_result_extra
         self.p = p
@@ -70,6 +72,8 @@ class PlaysData(Dataset):
 
     def initializing_df_data(self):
         for i in range(5):
+            if self.get_receiver_id:
+                self.data[f"nflId_{i}"] = []
             self.data[f"x_{i}"] = []
             self.data[f"y_{i}"] = []
             self.data[f"vel_{i}"] = []
@@ -83,7 +87,8 @@ class PlaysData(Dataset):
                 self.data[f"defensor_vel_{i}_{j}"] = []
                 self.data[f"defensor_accel_{i}_{j}"] = []
                 self.data[f"defensor_orientation_{i}_{j}"] = []
-        
+        if self.intended_receiver_input:
+            self.data["intended_receiver"] = []
         self.data["qb_x"] = []
         self.data["qb_y"] = []
         self.data["qb_orientation"] = []
@@ -178,6 +183,8 @@ class PlaysData(Dataset):
                     r_data = play_df[(play_df['nflId'] == rid) & (play_df["frameId"] == ball_frame)]
                     if not r_data.empty:
                         r_snap = r_data.iloc[0]
+                        if self.get_receiver_id:
+                            self.data[f"nflId_{j}"].append(r_snap['nflId'])
                         self.data[f"x_{j}"].append(r_snap['x'])
                         self.data[f"y_{j}"].append(r_snap['y'])
                         self.data[f"vel_{j}"].append(r_snap['s'])
@@ -207,13 +214,13 @@ class PlaysData(Dataset):
                                 for field in ['x', 'y', 'vel', 'accel', 'orientation']:
                                     self.data[f"defensor_{field}_{j}_{k}"].append(None)
                     else:
-                        for field in ['x', 'y', 'vel', 'accel', 'orientation', 'dist_qb', 'receiver_type']:
+                        for field in ['x', 'y', 'vel', 'accel', 'orientation', 'dist_qb', 'receiver_type', 'nflId']:
                             self.data[f"{field}_{j}"].append(None)
                         for k in range(2):
                             for field in ['x', 'y', 'vel', 'accel', 'orientation']:
                                 self.data[f"defensor_{field}_{j}_{k}"].append(None)
                 else:
-                    for field in ['x', 'y', 'vel', 'accel', 'orientation', 'dist_qb', 'receiver_type']:
+                    for field in ['x', 'y', 'vel', 'accel', 'orientation', 'dist_qb', 'receiver_type', 'nflId']:
                         self.data[f"{field}_{j}"].append(None)
                     for k in range(2):
                         for field in ['x', 'y', 'vel', 'accel', 'orientation']:
@@ -225,7 +232,11 @@ class PlaysData(Dataset):
                 if player.causedPressure:
                     amount_causing_pressure += 1
 
+            if self.intended_receiver_input:
+                self.data["intended_receiver"].append(targetedReceiver)
+
             self.data["amount_of_players_causing_pressure_on_qb"].append(amount_causing_pressure)
+
             if self.beta:
                 self.data["yardsToGo"].append(play_df.iloc[0]["yardsToGo"].item())
                 self.data["down"].append(play_df.iloc[0]["down"].item())
@@ -235,6 +246,7 @@ class PlaysData(Dataset):
                 self.data["passResultExtra"].append(play_info.iloc[0]['passResult'])
                 self.data["playId"].append(playId)
                 self.data["gameId"].append(gameId)
+
             if self.v == 1 or self.v == 4:
                 self.data["result"].append(targetedReceiver)
             elif self.v == 2:
@@ -297,7 +309,13 @@ class PlaysData(Dataset):
         result_parts = []
 
         #removing initial nans (just based on results or x_0)
-        self.data.dropna(subset=['result', 'x_0'], inplace=True)
+        drop_subset = ['result', 'x_0']      
+        if self.get_receiver_id:
+            drop_subset.append('nflId')
+        if self.intended_receiver_input:
+            drop_subset.append('intended_receiver')
+
+        self.data.dropna(subset=drop_subset, inplace=True)
         
         #adding one hot encoding for discrete features
         for col in tqdm(self.data.columns):
@@ -357,21 +375,26 @@ class PlaysData(Dataset):
             plt.clf()
 
 
-    def get_orientation_based_on_receiver(self, receiver, index, output_dim):
-        row = self.data.iloc[index, :-output_dim]
-        x_qb = row["qb_x"]
-        y_qb = row["qb_y"]
-        x_receiver = row[f"x_{receiver}"]
-        y_receiver = row[f"y_{receiver}"]
+    def get_orientation_based_on_receiver(self, receiver, index, output_dim, x_qb=None, y_qb=None, x_receiver=None, y_receiver=None):
+        if index:
+            row = self.data.iloc[index, :-output_dim]
+            x_qb = row["qb_x"]
+            y_qb = row["qb_y"]
+            x_receiver = row[f"x_{receiver}"]
+            y_receiver = row[f"y_{receiver}"]
 
         dx = x_receiver - x_qb
         dy = y_receiver - y_qb
+        projected_angle = (90 - np.degrees(np.arctan2(dy, dx))) % 360
 
-        real_angle = row["qb_orientation"]
-        row["qb_orientation"] = (90 - np.degrees(np.arctan2(dy, dx))) % 360
+        if index:
+            real_angle = row["qb_orientation"]
+            row["qb_orientation"] = projected_angle
 
-        return torch.tensor(row), row["qb_orientation"], real_angle
-
+            return torch.tensor(row), row["qb_orientation"], real_angle
+        
+        return  projected_angle
+    
     def augmentation(self):
         pass
 

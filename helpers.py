@@ -13,14 +13,14 @@ if torch.cuda.is_available():
 else:
   DEVICE = torch.device("cpu")
 
-def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=True, play_id=None, game_id=None, cleaning=True, split=True, passed_result_extra = False, beta=True):
+def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=True, play_id=None, game_id=None, cleaning=True, split=True, passed_result_extra = False, beta=True, get_receiver_id=False, intended_receiver_input=False):
     if not beta:
         file_name = f"./finalFeatures/datasetsAlpha/final_data_variant{variant}_{all_frames}"
     else:
         file_name = f"./finalFeatures/final_data_variant{variant}_{all_frames}"     
 
     if not saved:
-        dataset = PlaysData(variant, all = all_frames, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra, beta=beta)
+        dataset = PlaysData(variant, all = all_frames, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra, beta=beta, get_receiver_id=get_receiver_id, intended_receiver_input=intended_receiver_input)
         if save:
           if all_frames:
             dataset.get_csv(name = file_name + f"_game{game_id}_play{play_id}.csv")
@@ -29,9 +29,9 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
 
     else:      
         if all_frames:
-            dataset = PlaysData(variant, pd.read_csv(file_name + f"_game{game_id}_play{play_id}.csv"), all = all_frames, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra, beta=beta)
+            dataset = PlaysData(variant, pd.read_csv(file_name + f"_game{game_id}_play{play_id}.csv"), all = all_frames, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra, beta=beta, get_receiver_id=get_receiver_id, intended_receiver_input=intended_receiver_input)
         else:
-          dataset = PlaysData(variant, pd.read_csv(file_name + ".csv"), all = all_frames, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra, beta=beta)
+          dataset = PlaysData(variant, pd.read_csv(file_name + ".csv"), all = all_frames, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra, beta=beta, get_receiver_id=get_receiver_id, intended_receiver_input=intended_receiver_input)
 
     n = len(dataset)
 
@@ -72,8 +72,8 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
       return train_loader, val_loader, dataset
     return train_loader, val_loader
 
-def getting_frames_dataset(game_id, play_id, loaded, save, beta=False):
-  loader, dataset = getting_loader(1, save=save, num_workers=0, variant = 5, train_p=0.8, saved=loaded, distr_analysis=False, get_dataset=True, game_id=game_id, play_id=play_id, all_frames=True, beta=beta, split=False)
+def getting_frames_dataset(game_id, play_id, loaded, save, get_angles, beta=False):
+  loader, dataset = getting_loader(1, save=save, num_workers=0, variant = 5, train_p=0.8, saved=loaded, distr_analysis=False, get_dataset=True, game_id=game_id, play_id=play_id, all_frames=True, beta=beta, split=False, get_receiver_id=get_angles)
   return dataset
 
 def get_acc(y_hat, y, t):
@@ -177,7 +177,7 @@ def plotting(version, loss_training, acc_training, loss_val, acc_val):
       plt.legend()
       plt.title(title)
       plt.savefig("modelsPerformance/" + title + ".png")
-      plt.show()
+      plt.close()
 
   plot_(f"Loss Training {version}", loss_training, "Loss")
   plot_(f"Accuracy Training {version}", acc_training, "Accuracy")

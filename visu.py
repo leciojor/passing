@@ -30,7 +30,7 @@ def get_model_prediction_for_receiver(dataset, receiver, model_file, index):
 
         y_hat = model(x)
         prob = torch.sigmoid(y_hat) 
-        return prob.item(), projected_orientation, real_angle
+        return prob.item()
     
     except RuntimeError:
         # ideal would be to change the logic to clean/prepare the data generalizing for all situations
@@ -61,6 +61,19 @@ def get_receiver_number(receivers, curr_receiver_id, frame_data):
     if receiver_row.empty:
         return -1
     return receiver_row.index[0]
+
+def getting_angles_coordinates(projected_angles, real_angles, qb_x, qb_y, line_length):
+    proj_angle_rad = np.radians(projected_angles[0])
+    real_angle_rad = np.radians(real_angles[0])
+    
+    proj_end_x = qb_x + line_length * np.cos(proj_angle_rad)
+    proj_end_y = qb_y + line_length * np.sin(proj_angle_rad)
+    
+    real_end_x = qb_x + line_length * np.cos(real_angle_rad)
+    real_end_y = qb_y + line_length * np.sin(real_angle_rad)
+    
+    return proj_end_x, proj_end_y, real_end_x, real_end_y
+
 
 def create_football_field() -> tuple:
     """Create a football field plot."""
@@ -165,6 +178,9 @@ def get_play_phases(play_data: pd.DataFrame) -> Dict[str, int]:
     
     return phases
 
+def get_receiver_id(dataset, receiver_number):
+    return dataset.data.iloc[0][f"nflId_{receiver_number}"]
+
 def animate_play(game_id: int, play_id: int,
                 df_tracking: pd.DataFrame,
                 df_players: pd.DataFrame,
@@ -175,11 +191,13 @@ def animate_play(game_id: int, play_id: int,
                 save_path: Optional[str] = None,
                 loaded=False,
                 save=False,
-                display_angles=False) -> None:
+                display_angles=False,
+                line_length=15,
+                receiver_to_project=0) -> None:
     """Animate player tracking data for a specific play."""
 
     # getting dataset for receiver passing completion analysis
-    dataset = getting_frames_dataset(game_id, play_id, loaded, save)
+    dataset = getting_frames_dataset(game_id, play_id, loaded, save, display_angles)
 
     # Get data for this play
     play_data = get_play_data(game_id, play_id, df_tracking, df_players, df_plays, df_games)
@@ -191,7 +209,6 @@ def animate_play(game_id: int, play_id: int,
 
     # getting qb frames
     qb_frames_start, qb_frames_end = get_frames_indexes(play_data)
-    print(qb_frames_end-qb_frames_start)
     range_set = set(list(range(qb_frames_start, qb_frames_end+1)))
 
     # Get play phases
@@ -211,6 +228,15 @@ def animate_play(game_id: int, play_id: int,
     los = ax.axvline(x=0, color='#00A6FF', linestyle='-', alpha=0.7, linewidth=3)  # TV blue
     first_down = ax.axvline(x=0, color='#FFD700', linestyle='-', alpha=0.7, linewidth=3)  # TV yellow
     next_play = ax.axvline(x=0, color='white', linestyle='--', alpha=0.7, linewidth=2)
+
+    angle_lines = []
+    angle_texts = []
+    if display_angles:
+        receiver_id = get_receiver_id(dataset, receiver_to_project)
+        projected_line = ax.plot([], [], 'yellow', linewidth=2, alpha=0.8, label='Projected Angle')[0]
+        real_line = ax.plot([], [], 'red', linewidth=2, alpha=0.8, label='Real Angle')[0]
+        angle_lines = [projected_line, real_line]
+
     
     # Get play information
     try:
@@ -302,12 +328,54 @@ def animate_play(game_id: int, play_id: int,
         if 'end' in phases and frame >= phases['end']:
             phase = "Play Complete"
 
+        # qb data
+
+        if display_angles:
+            qb_data = frame_data[frame_data['position'] == 'QB']
+            receiver_data = frame_data[frame_data['nflId'] == receiver_id].iloc[0]
+
+            receiver_x = receiver_data['x']
+            receiver_y = receiver_data['y']
+            qb_x = qb_data.iloc[0]['x']
+            qb_y = qb_data.iloc[0]['y']
+            qb_angle = qb_data.iloc[0]['o']
+
+            for line in angle_lines:
+                line.set_data([], [])
+            for text in angle_texts:
+                text.remove()
+            angle_texts.clear()
+
+            # logic for more than one angle in case there is a necessity of visualizing angles of more than one receiver in the future
+            projected_angles = []
+            real_angles = []
+
+            projected_orientation = dataset.get_orientation_based_on_receiver(receiver_to_project, None, 1, qb_x, qb_y, receiver_x, receiver_y)
+
+            projected_angles.append(projected_orientation)
+            real_angles.append(qb_angle)
+
+            proj_end_x, proj_end_y, real_end_x, real_end_y =  getting_angles_coordinates(projected_angles, real_angles, qb_x, qb_y, line_length)
+            angle_lines[0].set_data([qb_x, proj_end_x], [qb_y, proj_end_y])  
+            angle_lines[1].set_data([qb_x, real_end_x], [qb_y, real_end_y])
+            proj_text = ax.text(proj_end_x, proj_end_y, f'Proj: {projected_angles[0]:.1f}°',
+                                color='yellow', fontweight='bold', fontsize=8,
+                                bbox=dict(facecolor='black', alpha=0.7, edgecolor='none'))
+            real_text = ax.text(real_end_x, real_end_y, f'Real: {real_angles[0]:.1f}°',
+                                color='red', fontweight='bold', fontsize=8,
+                                bbox=dict(facecolor='black', alpha=0.7, edgecolor='none'))
+            
+            angle_texts.extend([proj_text, real_text])
+
+
+
         # only getting probabilities for when the qb got the ball in hands
         probs = []
+
         if frame in range_set:
             for receiver in range(5):
-                prob, projected_angle, real_angle = get_model_prediction_for_receiver(dataset, receiver, MODEL_FILE, frame - qb_frames_start)
-                probs.append(prob)
+                prob = get_model_prediction_for_receiver(dataset, receiver, MODEL_FILE, frame - qb_frames_start)
+                probs.append(prob)        
 
         # Separate players and football
         players_data = frame_data[
@@ -372,7 +440,12 @@ def animate_play(game_id: int, play_id: int,
         else:
             event_text.set_text("")
         
-        return [players, football, los, first_down, next_play, title, event_text] + player_labels
+        return_list = [players, football, los, first_down, next_play, title, event_text] + player_labels
+        if display_angles:
+            return_list.extend(angle_lines)
+            return_list.extend(angle_texts)
+
+        return return_list
     
     # Create animation
     ani = animation.FuncAnimation(fig, 
@@ -420,7 +493,7 @@ def main():
     #    3980, 4012
     
     print(f"Animating game {game_id}, play {play_id}...")
-    animate_play(game_id, play_id, df_tracking, df_players, df_plays, df_games, df_play_players, show_labels='position', loaded=True, save=False)
+    animate_play(game_id, play_id, df_tracking, df_players, df_plays, df_games, df_play_players, show_labels='position', loaded=True, save=False, display_angles=True)
 
 if __name__ == "__main__":
     main() 
