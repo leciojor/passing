@@ -326,8 +326,6 @@ class PlaysData(Dataset):
         if self.just_shoulder_orientation:
             self.data.dropna(subset=["qb_orientation"], inplace=True)
         else:
-            result_parts = []
-
             #removing initial nans (just based on results or x_0)
             drop_subset = ['result', 'x_0']      
             if self.get_receiver_id:
@@ -337,6 +335,7 @@ class PlaysData(Dataset):
 
             self.data.dropna(subset=drop_subset, inplace=True)
         
+        result_parts = []
         #adding one hot encoding for discrete features
         for col in tqdm(self.data.columns):
             if pd.api.types.is_numeric_dtype(self.data[col]) and (col != "result" or self.v == 2):
