@@ -74,6 +74,7 @@ class PlaysData(Dataset):
     def initializing_df_data(self):
         if self.just_shoulder_orientation:
             self.data["qb_orientation"] = []
+            self.data["result"] = []
         else:
             for i in range(5):
                 if self.get_receiver_id:
@@ -187,16 +188,16 @@ class PlaysData(Dataset):
             else:
                 self.amounts_receivers[amount_receivers] = 1
 
-            if not self.just_shoulder_orientation:
-                for j in range(5):
-                    if j < amount_receivers:
-                        r = self.receivers.iloc[j]
-                        rid = r['nflId']
-                        r_data = play_df[(play_df['nflId'] == rid) & (play_df["frameId"] == ball_frame)]
-                        if not r_data.empty:
-                            r_snap = r_data.iloc[0]
-                            if self.get_receiver_id:
-                                self.data[f"nflId_{j}"].append(r_snap['nflId'])
+            for j in range(5):
+                if j < amount_receivers:
+                    r = self.receivers.iloc[j]
+                    rid = r['nflId']
+                    r_data = play_df[(play_df['nflId'] == rid) & (play_df["frameId"] == ball_frame)]
+                    if not r_data.empty:
+                        r_snap = r_data.iloc[0]
+                        if self.get_receiver_id and not self.just_shoulder_orientation:
+                            self.data[f"nflId_{j}"].append(r_snap['nflId'])
+                        if not self.just_shoulder_orientation:
                             self.data[f"x_{j}"].append(r_snap['x'])
                             self.data[f"y_{j}"].append(r_snap['y'])
                             self.data[f"vel_{j}"].append(r_snap['s'])
@@ -205,9 +206,10 @@ class PlaysData(Dataset):
                             dist = ((r_snap['x'] - qb_snap['x']) ** 2 + (r_snap['y'] - qb_snap['y']) ** 2) ** 0.5
                             self.data[f"dist_qb_{j}"].append(dist)
                             self.data[f"receiver_type_{j}"].append(r['position'])
-                            if r["wasTargettedReceiver"]:
-                                targetedReceiver = j
-
+                        if r["wasTargettedReceiver"]:
+                            targetedReceiver = j
+                        
+                        if not self.just_shoulder_orientation:
                             # getting defenders features
                             defenders = play_df[play_df['position'].isin(['CB', 'S', 'LB', 'FS', 'SS', 'DE', 'DT'])].copy()
                             defenders['dist'] = ((defenders['x'] - r_snap['x']) ** 2 +
@@ -225,19 +227,22 @@ class PlaysData(Dataset):
                                 else:
                                     for field in ['x', 'y', 'vel', 'accel', 'orientation']:
                                         self.data[f"defensor_{field}_{j}_{k}"].append(None)
-                        else:
-                            for field in fields:
-                                self.data[f"{field}_{j}"].append(None)
-                            for k in range(2):
-                                for field in ['x', 'y', 'vel', 'accel', 'orientation']:
-                                    self.data[f"defensor_{field}_{j}_{k}"].append(None)
-                    else:
+                    elif not self.just_shoulder_orientation:
                         for field in fields:
                             self.data[f"{field}_{j}"].append(None)
                         for k in range(2):
                             for field in ['x', 'y', 'vel', 'accel', 'orientation']:
                                 self.data[f"defensor_{field}_{j}_{k}"].append(None)
-
+                elif not self.just_shoulder_orientation:
+                    for field in fields:
+                        self.data[f"{field}_{j}"].append(None)
+                    for k in range(2):
+                        for field in ['x', 'y', 'vel', 'accel', 'orientation']:
+                            self.data[f"defensor_{field}_{j}_{k}"].append(None)
+            
+            if self.just_shoulder_orientation:
+                self.data["result"].append(targetedReceiver)
+            else:
                 amount_causing_pressure = 0
 
                 for player in play_players.itertuples():
@@ -275,7 +280,7 @@ class PlaysData(Dataset):
                             self.data["result"].append(pass_result)
                         else:
                             self.data["result"].append("I")
-                
+                    
         return True
 
     def get_frames_indexes(self):
