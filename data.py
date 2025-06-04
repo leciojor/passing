@@ -22,9 +22,10 @@ class PlaysData(Dataset):
         plt.clf()
 
 
-    def __init__(self, variant, data=None, all=False, p=3, game_id=None, play_id=None, passed_result_extra=False, beta=True, get_receiver_id=False, intended_receiver_input=False):
+    def __init__(self, variant, data=None, all=False, p=3, game_id=None, play_id=None, passed_result_extra=False, beta=True, get_receiver_id=False, intended_receiver_input=False, just_shoulder_orientation=False):
         self.get_receiver_id = get_receiver_id
         self.v = variant
+        self.just_shoulder_orientation = just_shoulder_orientation
         self.intended_receiver_input = intended_receiver_input
         self.beta = beta
         self.passed_extra = passed_result_extra
@@ -71,43 +72,46 @@ class PlaysData(Dataset):
         return self.data
 
     def initializing_df_data(self):
-        for i in range(5):
-            if self.get_receiver_id:
-                self.data[f"nflId_{i}"] = []
-            self.data[f"x_{i}"] = []
-            self.data[f"y_{i}"] = []
-            self.data[f"vel_{i}"] = []
-            self.data[f"accel_{i}"] = []
-            self.data[f"orientation_{i}"] = []
-            self.data[f"dist_qb_{i}"] = []
-            self.data[f"receiver_type_{i}"] = []
-            for j in range(2):
-                self.data[f"defensor_x_{i}_{j}"] = []
-                self.data[f"defensor_y_{i}_{j}"] = []
-                self.data[f"defensor_vel_{i}_{j}"] = []
-                self.data[f"defensor_accel_{i}_{j}"] = []
-                self.data[f"defensor_orientation_{i}_{j}"] = []
-        if self.intended_receiver_input:
-            self.data["intended_receiver"] = []
-        self.data["qb_x"] = []
-        self.data["qb_y"] = []
-        self.data["qb_orientation"] = []
-        self.data["qb_speed"] = []
-        self.data["qb_direction"] = []
-        self.data["qb_accel"] = []
+        if self.just_shoulder_orientation:
+            self.data["qb_orientation"] = []
+        else:
+            for i in range(5):
+                if self.get_receiver_id:
+                    self.data[f"nflId_{i}"] = []
+                self.data[f"x_{i}"] = []
+                self.data[f"y_{i}"] = []
+                self.data[f"vel_{i}"] = []
+                self.data[f"accel_{i}"] = []
+                self.data[f"orientation_{i}"] = []
+                self.data[f"dist_qb_{i}"] = []
+                self.data[f"receiver_type_{i}"] = []
+                for j in range(2):
+                    self.data[f"defensor_x_{i}_{j}"] = []
+                    self.data[f"defensor_y_{i}_{j}"] = []
+                    self.data[f"defensor_vel_{i}_{j}"] = []
+                    self.data[f"defensor_accel_{i}_{j}"] = []
+                    self.data[f"defensor_orientation_{i}_{j}"] = []
+            if self.intended_receiver_input:
+                self.data["intended_receiver"] = []
+            self.data["qb_x"] = []
+            self.data["qb_y"] = []
+            self.data["qb_orientation"] = []
+            self.data["qb_speed"] = []
+            self.data["qb_direction"] = []
+            self.data["qb_accel"] = []
 
-        # pressure fields
-        self.data["amount_of_players_causing_pressure_on_qb"] = []
-        if self.beta:
-            self.data["yardsToGo"] = []
-            self.data["down"] = []
-            self.data["yardLine"] = []
+            # pressure fields
+            self.data["amount_of_players_causing_pressure_on_qb"] = []
+            if self.beta:
+                self.data["yardsToGo"] = []
+                self.data["down"] = []
+                self.data["yardLine"] = []
 
-        self.data["result"] = []
-        if self.passed_extra:
-            self.data["passResultExtra"] = []
-            self.data["gameId"] = []
-            self.data["playId"] = []
+            self.data["result"] = []
+            if self.passed_extra:
+                self.data["passResultExtra"] = []
+                self.data["gameId"] = []
+                self.data["playId"] = []
     
     def process_frames_of_play(self):
 
@@ -155,14 +159,17 @@ class PlaysData(Dataset):
             qb_snap = qb_data.sort_values('frameId').iloc[i]
             ball_frame = qb_snap['frameId']
 
-            # getting qb features
-            self.data["qb_x"].append(qb_snap['x'])
-            self.data["qb_y"].append(qb_snap['y'])
-            # actual shoulder orientation
-            self.data["qb_orientation"].append(qb_snap['o'])
-            self.data["qb_speed"].append(qb_snap['s'])
-            self.data["qb_direction"].append(qb_snap['dir'])
-            self.data["qb_accel"].append(qb_snap['a'])
+            if self.just_shoulder_orientation:
+                self.data["qb_orientation"].append(qb_snap['o'])
+            else:
+                # getting qb features
+                self.data["qb_x"].append(qb_snap['x'])
+                self.data["qb_y"].append(qb_snap['y'])
+                # actual shoulder orientation
+                self.data["qb_orientation"].append(qb_snap['o'])
+                self.data["qb_speed"].append(qb_snap['s'])
+                self.data["qb_direction"].append(qb_snap['dir'])
+                self.data["qb_accel"].append(qb_snap['a'])
             
             # getting receivers features
             fields = ['x', 'y', 'vel', 'accel', 'orientation', 'dist_qb', 'receiver_type']
@@ -180,41 +187,48 @@ class PlaysData(Dataset):
             else:
                 self.amounts_receivers[amount_receivers] = 1
 
-            for j in range(5):
-                if j < amount_receivers:
-                    r = self.receivers.iloc[j]
-                    rid = r['nflId']
-                    r_data = play_df[(play_df['nflId'] == rid) & (play_df["frameId"] == ball_frame)]
-                    if not r_data.empty:
-                        r_snap = r_data.iloc[0]
-                        if self.get_receiver_id:
-                            self.data[f"nflId_{j}"].append(r_snap['nflId'])
-                        self.data[f"x_{j}"].append(r_snap['x'])
-                        self.data[f"y_{j}"].append(r_snap['y'])
-                        self.data[f"vel_{j}"].append(r_snap['s'])
-                        self.data[f"accel_{j}"].append(r_snap['a'])
-                        self.data[f"orientation_{j}"].append(r_snap['o'])
-                        dist = ((r_snap['x'] - qb_snap['x']) ** 2 + (r_snap['y'] - qb_snap['y']) ** 2) ** 0.5
-                        self.data[f"dist_qb_{j}"].append(dist)
-                        self.data[f"receiver_type_{j}"].append(r['position'])
-                        if r["wasTargettedReceiver"]:
-                            targetedReceiver = j
+            if not self.just_shoulder_orientation:
+                for j in range(5):
+                    if j < amount_receivers:
+                        r = self.receivers.iloc[j]
+                        rid = r['nflId']
+                        r_data = play_df[(play_df['nflId'] == rid) & (play_df["frameId"] == ball_frame)]
+                        if not r_data.empty:
+                            r_snap = r_data.iloc[0]
+                            if self.get_receiver_id:
+                                self.data[f"nflId_{j}"].append(r_snap['nflId'])
+                            self.data[f"x_{j}"].append(r_snap['x'])
+                            self.data[f"y_{j}"].append(r_snap['y'])
+                            self.data[f"vel_{j}"].append(r_snap['s'])
+                            self.data[f"accel_{j}"].append(r_snap['a'])
+                            self.data[f"orientation_{j}"].append(r_snap['o'])
+                            dist = ((r_snap['x'] - qb_snap['x']) ** 2 + (r_snap['y'] - qb_snap['y']) ** 2) ** 0.5
+                            self.data[f"dist_qb_{j}"].append(dist)
+                            self.data[f"receiver_type_{j}"].append(r['position'])
+                            if r["wasTargettedReceiver"]:
+                                targetedReceiver = j
 
-                        # getting defenders features
-                        defenders = play_df[play_df['position'].isin(['CB', 'S', 'LB', 'FS', 'SS', 'DE', 'DT'])].copy()
-                        defenders['dist'] = ((defenders['x'] - r_snap['x']) ** 2 +
-                                            (defenders['y'] - r_snap['y']) ** 2) ** 0.5
-                        closest = defenders.nsmallest(2, 'dist')
+                            # getting defenders features
+                            defenders = play_df[play_df['position'].isin(['CB', 'S', 'LB', 'FS', 'SS', 'DE', 'DT'])].copy()
+                            defenders['dist'] = ((defenders['x'] - r_snap['x']) ** 2 +
+                                                (defenders['y'] - r_snap['y']) ** 2) ** 0.5
+                            closest = defenders.nsmallest(2, 'dist')
 
-                        for k in range(2):
-                            if k < len(closest):
-                                d = closest.iloc[k]
-                                self.data[f"defensor_x_{j}_{k}"].append(d['x'])
-                                self.data[f"defensor_y_{j}_{k}"].append(d['y'])
-                                self.data[f"defensor_vel_{j}_{k}"].append(d['s'])
-                                self.data[f"defensor_accel_{j}_{k}"].append(d['a'])
-                                self.data[f"defensor_orientation_{j}_{k}"].append(d['o'])
-                            else:
+                            for k in range(2):
+                                if k < len(closest):
+                                    d = closest.iloc[k]
+                                    self.data[f"defensor_x_{j}_{k}"].append(d['x'])
+                                    self.data[f"defensor_y_{j}_{k}"].append(d['y'])
+                                    self.data[f"defensor_vel_{j}_{k}"].append(d['s'])
+                                    self.data[f"defensor_accel_{j}_{k}"].append(d['a'])
+                                    self.data[f"defensor_orientation_{j}_{k}"].append(d['o'])
+                                else:
+                                    for field in ['x', 'y', 'vel', 'accel', 'orientation']:
+                                        self.data[f"defensor_{field}_{j}_{k}"].append(None)
+                        else:
+                            for field in fields:
+                                self.data[f"{field}_{j}"].append(None)
+                            for k in range(2):
                                 for field in ['x', 'y', 'vel', 'accel', 'orientation']:
                                     self.data[f"defensor_{field}_{j}_{k}"].append(None)
                     else:
@@ -223,51 +237,45 @@ class PlaysData(Dataset):
                         for k in range(2):
                             for field in ['x', 'y', 'vel', 'accel', 'orientation']:
                                 self.data[f"defensor_{field}_{j}_{k}"].append(None)
-                else:
-                    for field in fields:
-                        self.data[f"{field}_{j}"].append(None)
-                    for k in range(2):
-                        for field in ['x', 'y', 'vel', 'accel', 'orientation']:
-                            self.data[f"defensor_{field}_{j}_{k}"].append(None)
 
-            amount_causing_pressure = 0
+                amount_causing_pressure = 0
 
-            for player in play_players.itertuples():
-                if player.causedPressure:
-                    amount_causing_pressure += 1
+                for player in play_players.itertuples():
+                    if player.causedPressure:
+                        amount_causing_pressure += 1
 
-            if self.intended_receiver_input:
-                self.data["intended_receiver"].append(targetedReceiver)
+                if self.intended_receiver_input:
+                    self.data["intended_receiver"].append(targetedReceiver)
 
-            self.data["amount_of_players_causing_pressure_on_qb"].append(amount_causing_pressure)
+                self.data["amount_of_players_causing_pressure_on_qb"].append(amount_causing_pressure)
 
-            if self.beta:
-                self.data["yardsToGo"].append(play_df.iloc[0]["yardsToGo"].item())
-                self.data["down"].append(play_df.iloc[0]["down"].item())
-                self.data["yardLine"].append(play_df.iloc[0]["yardlineNumber"].item())
+                if self.beta:
+                    self.data["yardsToGo"].append(play_df.iloc[0]["yardsToGo"].item())
+                    self.data["down"].append(play_df.iloc[0]["down"].item())
+                    self.data["yardLine"].append(play_df.iloc[0]["yardlineNumber"].item())
 
-            if self.passed_extra:
-                self.data["passResultExtra"].append(play_info.iloc[0]['passResult'])
-                self.data["playId"].append(playId)
-                self.data["gameId"].append(gameId)
+                if self.passed_extra:
+                    self.data["passResultExtra"].append(play_info.iloc[0]['passResult'])
+                    self.data["playId"].append(playId)
+                    self.data["gameId"].append(gameId)
 
-            if self.v == 1 or self.v == 4:
-                self.data["result"].append(targetedReceiver)
-            elif self.v == 2:
-                self.data["result"].append(play_df.iloc[0]['yardsGained'].item())
-            elif self.v == 3 or self.v == 5 or self.v == 6:
-                pass_result = play_info.iloc[0]['passResult']
-                if self.v == 5 or self.v == 3:
-                    if pass_result == "C":
-                        self.data["result"].append("C")
-                    else:
-                        self.data["result"].append("I")
-                elif self.v == 6:
-                    if pass_result == "C" or pass_result == "IN":
-                        self.data["result"].append(pass_result)
-                    else:
-                        self.data["result"].append("I")
-            
+                if self.v == 1 or self.v == 4:
+                    self.data["result"].append(targetedReceiver)
+                elif self.v == 2:
+                    self.data["result"].append(play_df.iloc[0]['yardsGained'].item())
+                elif self.v == 3 or self.v == 5 or self.v == 6:
+                    pass_result = play_info.iloc[0]['passResult']
+                    if self.v == 5 or self.v == 3:
+                        if pass_result == "C":
+                            self.data["result"].append("C")
+                        else:
+                            self.data["result"].append("I")
+                    elif self.v == 6:
+                        if pass_result == "C" or pass_result == "IN":
+                            self.data["result"].append(pass_result)
+                        else:
+                            self.data["result"].append("I")
+                
         return True
 
     def get_frames_indexes(self):

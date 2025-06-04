@@ -13,14 +13,14 @@ if torch.cuda.is_available():
 else:
   DEVICE = torch.device("cpu")
 
-def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=True, play_id=None, game_id=None, cleaning=True, split=True, passed_result_extra = False, beta=True, get_receiver_id=False, intended_receiver_input=False, receiver_to_project=0):
+def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=True, play_id=None, game_id=None, cleaning=True, split=True, passed_result_extra = False, beta=True, get_receiver_id=False, intended_receiver_input=False, receiver_to_project=0, just_shoulder_orientation=False):
     if not beta:
         file_name = f"./finalFeatures/datasetsAlpha/final_data_variant{variant}_{all_frames}"
     else:
         file_name = f"./finalFeatures/final_data_variant{variant}_{all_frames}"     
 
     if not saved:
-        dataset = PlaysData(variant, all = all_frames, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra, beta=beta, get_receiver_id=get_receiver_id, intended_receiver_input=intended_receiver_input)
+        dataset = PlaysData(variant, all = all_frames, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra, beta=beta, get_receiver_id=get_receiver_id, intended_receiver_input=intended_receiver_input, just_shoulder_orientation=just_shoulder_orientation)
         if save:
           if all_frames:
             dataset.get_csv(name = file_name + f"_game{game_id}_play{play_id}.csv")
@@ -29,9 +29,9 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
 
     else:      
         if all_frames:
-            dataset = PlaysData(variant, pd.read_csv(file_name + f"_game{game_id}_play{play_id}.csv"), all = all_frames, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra, beta=beta, get_receiver_id=get_receiver_id, intended_receiver_input=intended_receiver_input)
+            dataset = PlaysData(variant, pd.read_csv(file_name + f"_game{game_id}_play{play_id}.csv"), all = all_frames, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra, beta=beta, get_receiver_id=get_receiver_id, intended_receiver_input=intended_receiver_input, just_shoulder_orientation=just_shoulder_orientation)
         else:
-          dataset = PlaysData(variant, pd.read_csv(file_name + ".csv"), all = all_frames, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra, beta=beta, get_receiver_id=get_receiver_id, intended_receiver_input=intended_receiver_input)
+          dataset = PlaysData(variant, pd.read_csv(file_name + ".csv"), all = all_frames, game_id=game_id, play_id=play_id, passed_result_extra=passed_result_extra, beta=beta, get_receiver_id=get_receiver_id, intended_receiver_input=intended_receiver_input, just_shoulder_orientation=just_shoulder_orientation)
 
     n = len(dataset)
 
