@@ -318,49 +318,52 @@ class PlaysData(Dataset):
         self.receivers = self.receivers.sort_values(by='y', ascending=True).head(5)
         
     def converting_numerical_and_cleaning(self, r=False, receiver_to_project=0):
-        result_parts = []
+        if self.just_shoulder_orientation:
+            self.data.dropna(subset=["qb_orientation"], inplace=True)
+        else:
+            result_parts = []
 
-        #removing initial nans (just based on results or x_0)
-        drop_subset = ['result', 'x_0']      
-        if self.get_receiver_id:
-            drop_subset.append(f'nflId_{receiver_to_project}')
-        if self.intended_receiver_input:
-            drop_subset.append('intended_receiver')
+            #removing initial nans (just based on results or x_0)
+            drop_subset = ['result', 'x_0']      
+            if self.get_receiver_id:
+                drop_subset.append(f'nflId_{receiver_to_project}')
+            if self.intended_receiver_input:
+                drop_subset.append('intended_receiver')
 
-        self.data.dropna(subset=drop_subset, inplace=True)
-        
-        #adding one hot encoding for discrete features
-        for col in tqdm(self.data.columns):
-            if pd.api.types.is_numeric_dtype(self.data[col]) and (col != "result" or self.v == 2):
-                result_parts.append(self.data[[col]].astype(float))
-            elif self.v == 5 and col == "result":
-                binary_results = self.data[col].map({'C': 1, 'I': 0})
-                result_parts.append(binary_results.to_frame())
-            else:
-                if any(col == f'receiver_type_{i}' for i in range(5)):
-                    self.data[col] = pd.Categorical(self.data[col], categories=PlaysData.RECEIVER_TYPES)
+            self.data.dropna(subset=drop_subset, inplace=True)
+            
+            #adding one hot encoding for discrete features
+            for col in tqdm(self.data.columns):
+                if pd.api.types.is_numeric_dtype(self.data[col]) and (col != "result" or self.v == 2):
+                    result_parts.append(self.data[[col]].astype(float))
+                elif self.v == 5 and col == "result":
+                    binary_results = self.data[col].map({'C': 1, 'I': 0})
+                    result_parts.append(binary_results.to_frame())
+                else:
+                    if any(col == f'receiver_type_{i}' for i in range(5)):
+                        self.data[col] = pd.Categorical(self.data[col], categories=PlaysData.RECEIVER_TYPES)
 
-                dummies = pd.get_dummies(self.data[col], prefix=col, dtype=int)
-                result_parts.append(dummies)
+                    dummies = pd.get_dummies(self.data[col], prefix=col, dtype=int)
+                    result_parts.append(dummies)
 
-        self.data = pd.concat(result_parts, axis=1)
+            self.data = pd.concat(result_parts, axis=1)
 
-        #probably not a good idea for features like position, velocity
-        #filling the rest of nans with the average
-        self.data.fillna(self.data.mean(), inplace=True)
+            #probably not a good idea for features like position, velocity
+            #filling the rest of nans with the average
+            self.data.fillna(self.data.mean(), inplace=True)
 
-        if r:
-            def round_(x):
-                if isinstance(x, (int, float, np.number)) and x != 0:
-                    return round(x, 3)
-                return x 
-            self.data = self.data.applymap(round_)
-                
-        self.data.reset_index(drop=True, inplace=True)
-        self.length = len(self.data)
-        self.col_size = self.data.shape[1]
+            if r:
+                def round_(x):
+                    if isinstance(x, (int, float, np.number)) and x != 0:
+                        return round(x, 3)
+                    return x 
+                self.data = self.data.applymap(round_)
+                    
+            self.data.reset_index(drop=True, inplace=True)
+            self.length = len(self.data)
+            self.col_size = self.data.shape[1]
 
-        #maybe also normalizing values?
+            #maybe also normalizing values?
         
     def check_nan_features(self):
         nan_columns = self.data.columns[self.data.isna().any()].tolist()
