@@ -495,7 +495,7 @@ def main():
     #    3980, 4012
     
     print(f"Animating game {game_id}, play {play_id}...")
-    animate_play(game_id, play_id, df_tracking, df_players, df_plays, df_games, df_play_players, show_labels='position', loaded=True, save=False, display_angles=False)
+    animate_play(game_id, play_id, df_tracking, df_players, df_plays, df_games, df_play_players, show_labels='position', loaded=False, save=True, display_angles=False)
 
 if __name__ == "__main__":
     main() 
