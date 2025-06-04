@@ -481,7 +481,7 @@ def main():
     # Example game and play IDs
     # Have data complete for sure game_id: 2022091200, play_id: 2688:
     game_id = 2022091200
-    play_id = 2688
+    play_id = 487
     #  64,   85,  109,  156,  180,  201,  264,  286,  315,  346,  375,
     #     401,  446,  467,  565,  601,  622,  643,  664,  688,  716,  741,
     #     762,  786,  810,  882,  910,  931,  983, 1004, 1028, 1057, 1092,
@@ -495,7 +495,7 @@ def main():
     #    3980, 4012
     
     print(f"Animating game {game_id}, play {play_id}...")
-    animate_play(game_id, play_id, df_tracking, df_players, df_plays, df_games, df_play_players, show_labels='position', loaded=True, save=False, display_angles=True)
+    animate_play(game_id, play_id, df_tracking, df_players, df_plays, df_games, df_play_players, show_labels='position', loaded=True, save=False, display_angles=False)
 
 if __name__ == "__main__":
     main() 
