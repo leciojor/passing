@@ -138,7 +138,7 @@ def getting_time_series_analysis_binary_classification(model_file, i=4):
     plt.show()
 
 def further_analysis_results_variant_two(file_path):
-        loader, dataset = getting_loader(1, save=False, num_workers=0, variant = 2, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True, drop_qb_orientation=False, split=False)
+        loader, dataset = getting_loader(1, save=False, num_workers=0, variant = 2, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True, drop_qb_orientation=False, split=False, beta=True)
 
         state = torch.load(file_path, map_location=DEVICE)
         output_dim = 1
@@ -158,7 +158,7 @@ def further_analysis_results_variant_two(file_path):
             differences.append(diff.squeeze().item())
 
         plt.figure(figsize=(8, 6))
-        plt.hexscatterbin(actual_gained_yards, results, gridsize=60, cmap='viridis', mincnt=1)
+        plt.hexbin(actual_gained_yards, results, gridsize=60, cmap='viridis', mincnt=1)
         plt.colorbar(label='Counts')
         plt.xlabel("Actual Yards Gained")
         plt.ylabel("Model Predicted Yards Gained")
@@ -182,7 +182,8 @@ def getting_time_series_analysis_multi_class_classification(model_file):
 def getting_time_series_analysis_for_each_receiver(model_file):
     pass
 
-shoulder_orientation_feature_correlation_analysis()
+further_analysis_results_variant_two("models/model_variant2_lr0.01_n250000.pkl")
+# shoulder_orientation_feature_correlation_analysis()
 # further_analysis_results_variant_two("models/model_variant2_lr0.01_n250000.pkl")
 
 # for filename in os.listdir("models"):

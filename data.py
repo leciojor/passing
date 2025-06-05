@@ -9,6 +9,9 @@ class PlaysData(Dataset):
     VARIANTS_OUTPUT_SIZE = {1:5,2:1,3:3,4:5,5:1,6:3}
     # QB will be removed when exception scenarios are removed/considered
     RECEIVER_TYPES = ["WR", "TE", "QB", "RB", "FB"]
+    FIELDS_RECEIVERS = ['x', 'y', 'vel', 'accel', 'orientation', 'dist_qb', 'receiver_type', 'route_ran']
+    FIELDS_DEFENDERS = ['x', 'y', 'vel', 'accel', 'orientation']
+
 
     def plot_distributions(data, col, v):
         plt.figure(figsize=(6, 4))
@@ -86,6 +89,7 @@ class PlaysData(Dataset):
                 self.data[f"orientation_{i}"] = []
                 self.data[f"dist_qb_{i}"] = []
                 self.data[f"receiver_type_{i}"] = []
+                self.data[f"route_ran_{i}"] = []
                 for j in range(2):
                     self.data[f"defensor_x_{i}_{j}"] = []
                     self.data[f"defensor_y_{i}_{j}"] = []
@@ -173,9 +177,8 @@ class PlaysData(Dataset):
                 self.data["qb_accel"].append(qb_snap['a'])
             
             # getting receivers features
-            fields = ['x', 'y', 'vel', 'accel', 'orientation', 'dist_qb', 'receiver_type']
             if self.get_receiver_id:
-                fields.append('nflId')
+                PlaysData.FIELDS_RECEIVERS.append('nflId')
 
             targetedReceiver = None
             self.receivers = play_players[play_players['routeRan'].notna()].copy()
@@ -206,6 +209,7 @@ class PlaysData(Dataset):
                             dist = ((r_snap['x'] - qb_snap['x']) ** 2 + (r_snap['y'] - qb_snap['y']) ** 2) ** 0.5
                             self.data[f"dist_qb_{j}"].append(dist)
                             self.data[f"receiver_type_{j}"].append(r['position'])
+                            self.data[f"route_ran_{j}"].append(r['routeRan'])
                         if r["wasTargettedReceiver"]:
                             targetedReceiver = j
                         
@@ -225,19 +229,19 @@ class PlaysData(Dataset):
                                     self.data[f"defensor_accel_{j}_{k}"].append(d['a'])
                                     self.data[f"defensor_orientation_{j}_{k}"].append(d['o'])
                                 else:
-                                    for field in ['x', 'y', 'vel', 'accel', 'orientation']:
+                                    for field in PlaysData.FIELDS_DEFENDERS:
                                         self.data[f"defensor_{field}_{j}_{k}"].append(None)
                     elif not self.just_shoulder_orientation:
-                        for field in fields:
+                        for field in PlaysData.FIELDS_RECEIVERS:
                             self.data[f"{field}_{j}"].append(None)
                         for k in range(2):
-                            for field in ['x', 'y', 'vel', 'accel', 'orientation']:
+                            for field in PlaysData.FIELDS_DEFENDERS:
                                 self.data[f"defensor_{field}_{j}_{k}"].append(None)
                 elif not self.just_shoulder_orientation:
-                    for field in fields:
+                    for field in PlaysData.FIELDS_RECEIVERS:
                         self.data[f"{field}_{j}"].append(None)
                     for k in range(2):
-                        for field in ['x', 'y', 'vel', 'accel', 'orientation']:
+                        for field in PlaysData.FIELDS_DEFENDERS:
                             self.data[f"defensor_{field}_{j}_{k}"].append(None)
             
             if self.just_shoulder_orientation:
@@ -323,10 +327,10 @@ class PlaysData(Dataset):
         self.receivers = self.receivers.sort_values(by='y', ascending=True).head(5)
         
     def converting_numerical_and_cleaning(self, r=False, receiver_to_project=0):
+         #removing initial nans 
         if self.just_shoulder_orientation:
             self.data.dropna(subset=["qb_orientation"], inplace=True)
         else:
-            #removing initial nans (just based on results or x_0)
             drop_subset = ['result', 'x_0']      
             if self.get_receiver_id:
                 drop_subset.append(f'nflId_{receiver_to_project}')
@@ -363,12 +367,16 @@ class PlaysData(Dataset):
                         return round(x, 3)
                     return x 
                 self.data = self.data.applymap(round_)
-                    
+        
+        for col in tqdm(self.data.columns):
+        #numerical features normalization (except yardline)
+            self.data[col] = (self.data[col] - self.data[col].min()) / (self.data[col].max() - self.data[col].min())
+
+
         self.data.reset_index(drop=True, inplace=True)
         self.length = len(self.data)
         self.col_size = self.data.shape[1]
 
-        #maybe also normalizing values?
         
     def check_nan_features(self):
         nan_columns = self.data.columns[self.data.isna().any()].tolist()
