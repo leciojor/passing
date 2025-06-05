@@ -11,6 +11,8 @@ class PlaysData(Dataset):
     RECEIVER_TYPES = ["WR", "TE", "QB", "RB", "FB"]
     FIELDS_RECEIVERS = ['x', 'y', 'vel', 'accel', 'orientation', 'dist_qb', 'receiver_type', 'route_ran']
     FIELDS_DEFENDERS = ['x', 'y', 'vel', 'accel', 'orientation']
+    FIELD_LENGTH = 120.0
+    FIELD_WIDTH = 53.3
 
 
     def plot_distributions(data, col, v):
@@ -130,6 +132,15 @@ class PlaysData(Dataset):
                 self.play_df_formation(self.game_id, self.play_id, play_df)
 
     def play_df_formation(self, gameId, playId, play_df):
+        
+        #logic to make direction sensitive features standard
+        flip = play_df.iloc[0]["playDirection"] == "left"
+
+        if flip:
+            play_df['x'] = PlaysData.FIELD_LENGTH - play_df['x']
+            play_df['y'] = PlaysData.FIELD_LENGTH - play_df['y']
+            play_df['o'] =  (180 + play_df['o']) % 360
+            play_df['dir'] = (180 + play_df['dir']) % 360
 
         play_players = self.player_play[
             (self.player_play['gameId'] == gameId) &
@@ -367,12 +378,13 @@ class PlaysData(Dataset):
                         return round(x, 3)
                     return x 
                 self.data = self.data.applymap(round_)
-        
-        for col in tqdm(self.data.columns):
+
         #numerical features normalization (except yardline)
-            self.data[col] = (self.data[col] - self.data[col].min()) / (self.data[col].max() - self.data[col].min())
+        for col in tqdm(self.data.columns):
+            if not col == "yardLine":
+                self.data[col] = (self.data[col] - self.data[col].min()) / (self.data[col].max() - self.data[col].min())
 
-
+    
         self.data.reset_index(drop=True, inplace=True)
         self.length = len(self.data)
         self.col_size = self.data.shape[1]
