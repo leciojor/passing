@@ -13,7 +13,7 @@ if torch.cuda.is_available():
 else:
   DEVICE = torch.device("cpu")
 
-def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=True, play_id=None, game_id=None, cleaning=True, split=True, passed_result_extra = False, beta=True, get_receiver_id=False, intended_receiver_input=False, receiver_to_project=0, just_shoulder_orientation=False):
+def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=True, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=True, play_id=None, game_id=None, cleaning=True, split=True, passed_result_extra = False, beta=True, get_receiver_id=False, intended_receiver_input=False, receiver_to_project=0, just_shoulder_orientation=False):
     if not beta:
         file_name = f"./finalFeatures/datasetsAlpha/final_data_variant{variant}_{all_frames}"
     else:
@@ -76,11 +76,10 @@ def getting_frames_dataset(game_id, play_id, loaded, save, get_angles, receiver_
   loader, dataset = getting_loader(1, save=save, num_workers=0, variant = 5, train_p=0.8, saved=loaded, distr_analysis=False, get_dataset=True, game_id=game_id, play_id=play_id, all_frames=True, beta=beta, split=False, get_receiver_id=get_angles, receiver_to_project=receiver_to_project)
   return dataset
 
-def get_acc(y_hat, y, t):
+def get_acc(y_hat, y, t, tolerance=5.0):
     with torch.no_grad():
         #regression
         if t == 2:
-            tolerance = 10.0
             inferences = (torch.abs(y_hat - y) < tolerance).float()
 
         #binary classification
@@ -184,8 +183,8 @@ def plotting(version, loss_training, acc_training, loss_val, acc_val):
   plot_(f"Loss Validation {version}", loss_val, "Loss", val=True)
   plot_(f"Accuracy Validation {version}", acc_val, "Accuracy", val=True)
 
-getting_loader(1, save=True, num_workers=2, variant = 1, train_p=0.9, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False)
-getting_loader(1, save=True, num_workers=2, variant = 2, train_p=0.9, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False)
-getting_loader(1, save=True, num_workers=2, variant = 3, train_p=0.9, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False)
-getting_loader(1, save=True, num_workers=2, variant = 5, train_p=0.9, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False)
-getting_loader(1, save=True, num_workers=2, variant = 6, train_p=0.9, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False)
+# getting_loader(1, save=True, num_workers=2, variant = 1, train_p=0.9, saved=True, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False)
+# getting_loader(1, save=True, num_workers=2, variant = 2, train_p=0.9, saved=True, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False)
+# getting_loader(1, save=True, num_workers=2, variant = 3, train_p=0.9, saved=True, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False)
+# getting_loader(1, save=True, num_workers=2, variant = 5, train_p=0.9, saved=True, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False)
+# getting_loader(1, save=True, num_workers=2, variant = 6, train_p=0.9, saved=True, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False)

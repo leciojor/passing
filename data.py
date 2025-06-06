@@ -13,6 +13,8 @@ class PlaysData(Dataset):
     FIELDS_DEFENDERS = ['x', 'y', 'vel', 'accel', 'orientation']
     FIELD_LENGTH = 120.0
     FIELD_WIDTH = 53.3
+    NUMERICAL_DISCRETE_FEATURES = {"down", "amount_of_players_causing_pressure_on_qb"}
+    DROP_SUBSET = ['result', 'x_0'] 
 
 
     def plot_distributions(data, col, v):
@@ -337,23 +339,23 @@ class PlaysData(Dataset):
 
         self.receivers = self.receivers.sort_values(by='y', ascending=True).head(5)
         
-    def converting_numerical_and_cleaning(self, r=False, receiver_to_project=0):
+    def converting_numerical_and_cleaning(self, r=False, n=True, receiver_to_project=0):
          #removing initial nans 
         if self.just_shoulder_orientation:
             self.data.dropna(subset=["qb_orientation"], inplace=True)
-        else:
-            drop_subset = ['result', 'x_0']      
+        else:      
             if self.get_receiver_id:
-                drop_subset.append(f'nflId_{receiver_to_project}')
+                PlaysData.DROP_SUBSET.append(f'nflId_{receiver_to_project}')
             if self.intended_receiver_input:
-                drop_subset.append('intended_receiver')
+                PlaysData.DROP_SUBSET.append('intended_receiver')
 
-            self.data.dropna(subset=drop_subset, inplace=True)
+            self.data.dropna(subset=PlaysData.DROP_SUBSET, inplace=True)
         
         result_parts = []
         #adding one hot encoding for discrete features
         for col in tqdm(self.data.columns):
-            if pd.api.types.is_numeric_dtype(self.data[col]) and (col != "result" or self.v == 2):
+            # not getting one hot encoding of amount of players caussing pressure to avoid increasing dimensionality
+            if pd.api.types.is_numeric_dtype(self.data[col]) and (col != "result" or self.v == 2) and col != "down":
                 result_parts.append(self.data[[col]].astype(float))
             elif self.v == 5 and col == "result":
                 binary_results = self.data[col].map({'C': 1, 'I': 0})
@@ -362,6 +364,9 @@ class PlaysData(Dataset):
                 if any(col == f'receiver_type_{i}' for i in range(5)):
                     self.data[col] = pd.Categorical(self.data[col], categories=PlaysData.RECEIVER_TYPES)
 
+                #filling the rest of nans (discrete features) with the most common class
+                self.data[col].fillna(self.data[col].mode()[0], inplace=True)
+
                 dummies = pd.get_dummies(self.data[col], prefix=col, dtype=int)
                 result_parts.append(dummies)
 
@@ -369,7 +374,7 @@ class PlaysData(Dataset):
 
         if not self.just_shoulder_orientation:
             #probably not a good idea for features like position, velocity
-            #filling the rest of nans with the average
+            #filling the rest of nans (numerical features) with the average
             self.data.fillna(self.data.mean(), inplace=True)
 
             if r:
@@ -380,11 +385,11 @@ class PlaysData(Dataset):
                 self.data = self.data.applymap(round_)
 
         #numerical features normalization (except yardline)
-        for col in tqdm(self.data.columns):
-            if not col == "yardLine":
-                self.data[col] = (self.data[col] - self.data[col].min()) / (self.data[col].max() - self.data[col].min())
-
-    
+        if n:
+            for col in tqdm(self.data.columns):
+                if not col == "yardLine" and not col == "result" and not col in PlaysData.NUMERICAL_DISCRETE_FEATURES and pd.api.types.is_numeric_dtype(self.data[col]):
+                    self.data[col] = (self.data[col] - self.data[col].min()) / (self.data[col].max() - self.data[col].min())
+        
         self.data.reset_index(drop=True, inplace=True)
         self.length = len(self.data)
         self.col_size = self.data.shape[1]
