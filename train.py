@@ -40,7 +40,7 @@ plotting(version, loss_training, acc_training, loss_val, acc_val)
 
 #training variant 2
 
-train_loader, val_loader, dataset = getting_loader(16, save=False, num_workers=6, variant = 2, train_p=0.9, saved=True, distr_analysis=False, get_dataset=True, beta=True, intended_receiver_input=True)
+train_loader, val_loader, dataset = getting_loader(16, save=False, num_workers=6, variant = 2, train_p=0.9, saved=True, distr_analysis=False, get_dataset=True, beta=True)
 net = DeepQBVariant1(input_dim=dataset.col_size - 1, output_dim=1)
 optimizer = torch.optim.Adam(lr=lr, params=net.parameters())
 version = f"variant2_lr{lr}_n{n}"
@@ -49,7 +49,7 @@ plotting(version, loss_training, acc_training, loss_val, acc_val)
 
 # #training variant 5
 
-train_loader, val_loader, dataset = getting_loader(16, save=False, num_workers=6, variant = 5, train_p=0.9, saved=True, distr_analysis=False, get_dataset=True, beta=True, intended_receiver_input=True)
+train_loader, val_loader, dataset = getting_loader(16, save=False, num_workers=6, variant = 5, train_p=0.9, saved=True, distr_analysis=False, get_dataset=True, beta=True)
 net = DeepQBVariant1(input_dim=dataset.col_size - 1, output_dim=1)
 optimizer = torch.optim.Adam(lr=lr, params=net.parameters())
 version = f"variant5_lr{lr}_n{n}"
