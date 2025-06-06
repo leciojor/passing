@@ -16,12 +16,12 @@ else:
 
 def getting_results_distribution():
 
-    for filename in os.listdir("models"):
+    for filename in os.listdir("models/datasetsBetaFinalCleanedVersion"):
         variant = int(re.search(r'variant(\d+)', filename).group(1))
         if variant == 2:
             continue
 
-        drop = not  "shoulder" in filename and variant == 1
+        drop = not "shoulder" in filename and variant == 1
         train_loader, val_loader, dataset = getting_loader(16, save=False, num_workers=0, variant = variant, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True, drop_qb_orientation=drop)
 
         file_path = os.path.join("models", filename)
@@ -59,7 +59,7 @@ def getting_results_distribution():
         plt.xticks(labels)
         plt.grid(axis='y', linestyle='--', alpha=0.7)
         plt.tight_layout()
-        plt.savefig(f"distributions/models/distribution_variant{variant}_model {filename}.png")
+        plt.savefig(f"distributions/models/finalBetaVersion/distribution_variant{variant}_model {filename}.png")
         plt.show()
 
 def shoulder_orientation_feature_correlation_analysis():
@@ -137,42 +137,60 @@ def getting_time_series_analysis_binary_classification(model_file, i=4):
     plt.savefig(f"timeseries/timeseries_analysis_model{model_file[-20:]}instance {i}.png")
     plt.show()
 
-def further_analysis_results_variant_two(file_path):
-        loader, dataset = getting_loader(1, save=False, num_workers=0, variant = 2, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True, drop_qb_orientation=False, split=False, beta=True)
+def calibration_analysis(file_path):
+        for filename in os.listdir("models/datasetsBetaFinalCleanedVersion"):
+            if not filename == "model_variant1_lr0.01_n250000_with shoulder orientation.pkl":
+                variant = int(re.search(r'variant(\d+)', filename).group(1))
+                loader, dataset = getting_loader(1, save=False, num_workers=1, variant = variant, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True, drop_qb_orientation=False, split=False, beta=True)
 
-        state = torch.load(file_path, map_location=DEVICE)
-        output_dim = 1
-        model = DeepQBVariant1(input_dim=dataset.col_size - output_dim, output_dim=output_dim)
-        model.load_state_dict(state)
-        model.eval()
+                state = torch.load(file_path, map_location=DEVICE)
+                if variant == 5 or variant == 2:
+                    output_dim = 1
+                elif variant == 1:
+                    output_dim = 5
+                elif variant == 6:
+                    output_dim=3
+                model = DeepQBVariant1(input_dim=dataset.col_size - output_dim, output_dim=output_dim)
+                model.load_state_dict(state)
+                model.eval()
 
-        results = []
-        actual_gained_yards = []
-        differences = []
+                results = []
+                actuals = []
+                # differences = []
 
-        for x, y in loader:
-            y_hat = model(x)
-            results.append(y_hat.squeeze().item())
-            actual_gained_yards.append(y.squeeze().item())
-            diff = abs(y-y_hat)
-            differences.append(diff.squeeze().item())
+                for x, y in loader:
+                    y_hat = model(x)
+                    if variant == 2:
+                        inference = y_hat
+                        actual = y
+                        # diff = abs(y-y_hat)
+                        # differences.append(diff.squeeze().item())
+                    elif variant == 1 or variant == 6:
+                        inference = torch.argmax(y_hat)
+                        actual = torch.argmax(y)
+                    elif variant == 3:
+                        prob = torch.sigmoid(y_hat)
+                        inference = prob > 0.5
+                        actual = y
+                    results.append(inference.squeeze().item())
+                    actuals.append(actual.squeeze().item())
 
-        plt.figure(figsize=(8, 6))
-        plt.hexbin(actual_gained_yards, results, gridsize=60, cmap='viridis', mincnt=1)
-        plt.colorbar(label='Counts')
-        plt.xlabel("Actual Yards Gained")
-        plt.ylabel("Model Predicted Yards Gained")
-        plt.title(f"Variant 2 results")
-        plt.tight_layout()
-        plt.savefig("moreAnalysis/variant2Results.png")
-        plt.show()
+                plt.figure(figsize=(8, 6))
+                plt.hexbin(actual, results, gridsize=60, cmap='viridis', mincnt=1)
+                plt.colorbar(label='Counts')
+                plt.xlabel("Actual")
+                plt.ylabel("Model Prediction")
+                plt.title(f"Variant {variant} results")
+                plt.tight_layout()
+                plt.savefig(f"moreAnalysis/finalBetaVersion/variant{variant}Calibration.png")
+                plt.show()
 
-        plt.figure(figsize=(8, 5))
-        sns.histplot(differences, bins=100, kde=True)
-        plt.title("Diffences between Model Predictions and actual Yards gained")
-        plt.xlabel("Difference")
-        plt.savefig("moreAnalysis/yardsGainedDifference.png")
-        plt.show()
+                # plt.figure(figsize=(8, 5))
+                # sns.histplot(differences, bins=100, kde=True)
+                # plt.title("Diffences between Model Predictions and actual Yards gained")
+                # plt.xlabel("Difference")
+                # plt.savefig("moreAnalysis/yardsGainedDifference.png")
+                # plt.show()
 
 
 
@@ -182,9 +200,9 @@ def getting_time_series_analysis_multi_class_classification(model_file):
 def getting_time_series_analysis_for_each_receiver(model_file):
     pass
 
-further_analysis_results_variant_two("models/model_variant2_lr0.01_n250000.pkl")
+getting_results_distribution()
+calibration_analysis()
 # shoulder_orientation_feature_correlation_analysis()
-# further_analysis_results_variant_two("models/model_variant2_lr0.01_n250000.pkl")
 
 # for filename in os.listdir("models"):
 #     file_path = os.path.join("models", filename)
