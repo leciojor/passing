@@ -153,6 +153,12 @@ class PlaysData(Dataset):
             (self.plays['playId'] == playId)
         ]
 
+        pass_result = play_info.iloc[0]['passResult']
+
+        # logic to only gather completed plays for variant 2
+        if self.v == 2 and not pass_result == "C":
+            return False
+
         if not self.all:
             qb_data = play_df[(play_df['position'] == 'QB') & (play_df["event"] == "pass_forward")]
         else:
@@ -286,7 +292,6 @@ class PlaysData(Dataset):
                 elif self.v == 2:
                     self.data["result"].append(play_df.iloc[0]['yardsGained'].item())
                 elif self.v == 3 or self.v == 5 or self.v == 6:
-                    pass_result = play_info.iloc[0]['passResult']
                     if self.v == 5 or self.v == 3:
                         if pass_result == "C":
                             self.data["result"].append("C")

@@ -6,6 +6,7 @@ from helpers import getting_loader
 from archs import DeepQBVariant1
 import re
 import seaborn as sns
+from sklearn.calibration import calibration_curve
 import numpy as np
 
 if torch.cuda.is_available():
@@ -15,16 +16,16 @@ else:
 
 
 def getting_results_distribution():
-
-    for filename in os.listdir("models/datasetsBetaFinalCleanedVersion"):
-        variant = int(re.search(r'variant(\d+)', filename).group(1))
+    models_folder = "models/datasetsBetaFinalCleanedVersion"
+    for filename in os.listdir(models_folder):
+        variant = int(re.search(r'variant(\d)', filename).group(1))
         if variant == 2:
             continue
 
         drop = not "shoulder" in filename and variant == 1
-        train_loader, val_loader, dataset = getting_loader(16, save=False, num_workers=0, variant = variant, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True, drop_qb_orientation=drop)
+        train_loader, val_loader, dataset = getting_loader(16, save=False, num_workers=0, variant = variant, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True, drop_qb_orientation=drop, beta=True)
 
-        file_path = os.path.join("models", filename)
+        file_path = os.path.join(models_folder, filename)
         state = torch.load(file_path, map_location=DEVICE)
         if variant == 5 or variant == 2:
             output_dim = 1
@@ -137,14 +138,16 @@ def getting_time_series_analysis_binary_classification(model_file, i=4):
     plt.savefig(f"timeseries/timeseries_analysis_model{model_file[-20:]}instance {i}.png")
     plt.show()
 
-def calibration_analysis(file_path):
-        for filename in os.listdir("models/datasetsBetaFinalCleanedVersion"):
+def calibration_analysis():
+        models_folder = "models/datasetsBetaFinalCleanedVersion/"
+        for filename in os.listdir(models_folder):
             if not filename == "model_variant1_lr0.01_n250000_with shoulder orientation.pkl":
-                variant = int(re.search(r'variant(\d+)', filename).group(1))
-                loader, dataset = getting_loader(1, save=False, num_workers=1, variant = variant, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True, drop_qb_orientation=False, split=False, beta=True)
-
-                state = torch.load(file_path, map_location=DEVICE)
-                if variant == 5 or variant == 2:
+                variant = int(re.search(r'variant(\d)', filename).group(1))
+                drop = not "shoulder" in filename and variant == 1
+                loader, dataset = getting_loader(1, save=False, num_workers=0, variant = variant, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True, drop_qb_orientation=drop, split=False, beta=True)
+                
+                state = torch.load(models_folder + filename, map_location=DEVICE)
+                if variant == 5 or variant == 2 or variant == 3:
                     output_dim = 1
                 elif variant == 1:
                     output_dim = 5
@@ -157,31 +160,42 @@ def calibration_analysis(file_path):
                 results = []
                 actuals = []
                 # differences = []
-
-                for x, y in loader:
-                    y_hat = model(x)
-                    if variant == 2:
-                        inference = y_hat
-                        actual = y
-                        # diff = abs(y-y_hat)
-                        # differences.append(diff.squeeze().item())
-                    elif variant == 1 or variant == 6:
-                        inference = torch.argmax(y_hat)
-                        actual = torch.argmax(y)
-                    elif variant == 3:
-                        prob = torch.sigmoid(y_hat)
-                        inference = prob > 0.5
-                        actual = y
-                    results.append(inference.squeeze().item())
-                    actuals.append(actual.squeeze().item())
-
+                with torch.no_grad():
+                    for x, y in loader:
+                        y_hat = model(x)
+                        if variant == 2:
+                            inference = y_hat
+                            actual = y
+                            # diff = abs(y-y_hat)
+                            # differences.append(diff.squeeze().item())
+                        elif variant == 1 or variant == 6:
+                            inference = torch.argmax(y_hat)
+                            actual = torch.argmax(y)
+                        elif variant == 5:
+                            prob = torch.sigmoid(y_hat)
+                            inference = prob > 0.5
+                            actual = y
+                        results.append(inference.squeeze().item())
+                        actuals.append(actual.squeeze().item())
+                
                 plt.figure(figsize=(8, 6))
-                plt.hexbin(actual, results, gridsize=60, cmap='viridis', mincnt=1)
-                plt.colorbar(label='Counts')
-                plt.xlabel("Actual")
-                plt.ylabel("Model Prediction")
-                plt.title(f"Variant {variant} results")
-                plt.tight_layout()
+                if variant == 5:
+                    actuals, results = calibration_curve(actuals, results)
+                    plt.figure(figsize=(8, 6))
+                    plt.plot(results, actuals, "o-", label="Model")
+                    plt.plot([0, 1], [0, 1], "k--", label="Perfectly calibrated")
+                    plt.xlabel("Mean Predicted Probability (Complete)")
+                    plt.ylabel("Fraction of Positives (Observed Frequency)")
+                    plt.title("Calibration Curve for 'Complete' Passes")
+                    plt.legend()
+                    plt.grid(True)
+                else:
+                    plt.hexbin(actuals, results, gridsize=60, cmap='viridis', mincnt=1)
+                    plt.colorbar(label='Counts')
+                    plt.xlabel("Actual")
+                    plt.ylabel("Model Prediction")
+                    plt.title(f"Variant {variant} results")
+                    plt.tight_layout()
                 plt.savefig(f"moreAnalysis/finalBetaVersion/variant{variant}Calibration.png")
                 plt.show()
 
@@ -200,7 +214,7 @@ def getting_time_series_analysis_multi_class_classification(model_file):
 def getting_time_series_analysis_for_each_receiver(model_file):
     pass
 
-getting_results_distribution()
+# getting_results_distribution()
 calibration_analysis()
 # shoulder_orientation_feature_correlation_analysis()
 
