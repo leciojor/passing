@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 if torch.cuda.is_available():
   DEVICE = torch.device("cuda")
-  print("ROCm is working")
+  print("CUDA is working")
 else:
   DEVICE = torch.device("cpu")
 
