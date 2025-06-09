@@ -471,6 +471,8 @@ class PlaysData(Dataset):
 
         self.data = pd.concat([self.data, mirrored_df], ignore_index=True)
 
+        self.length = len(self.data)
+
 
     def get_csv(self, name):
         self.data.to_csv(name, index=False)
