@@ -37,15 +37,10 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
 
     if distr_analysis:
       dataset.distributions_analysis()
-      
+
     if augment:
       print(f"**BEFORE AUGMENTING** Dataset size: {n}")
       dataset.augmentation(receiver_to_project)
-      if save:
-          if all_frames:
-            dataset.get_csv(name = file_name + f"_game{game_id}_play{play_id}_cleaned.csv")
-          else:
-            dataset.get_csv(name = file_name + f"_cleaned.csv")
       n_augment = len(dataset)
       n = n_augment
       print(f"**AFTER AUGMENTING** Dataset size: {n_augment}")
@@ -195,8 +190,8 @@ def plotting(version, loss_training, acc_training, loss_val, acc_val):
   plot_(f"Loss Validation {version}", loss_val, "Loss", val=True)
   plot_(f"Accuracy Validation {version}", acc_val, "Accuracy", val=True)
 
-# getting_loader(1, save=True, num_workers=2, variant = 1, train_p=0.9, saved=True, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False)
-# getting_loader(1, save=True, num_workers=2, variant = 2, train_p=0.9, saved=True, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False)
-# getting_loader(1, save=True, num_workers=2, variant = 3, train_p=0.9, saved=True, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False)
-# getting_loader(1, save=True, num_workers=2, variant = 5, train_p=0.9, saved=True, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False)
-# getting_loader(1, save=True, num_workers=2, variant = 6, train_p=0.9, saved=True, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False)
+getting_loader(1, save=True, num_workers=2, variant = 1, train_p=0.9, saved=True, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False, augment=True)
+getting_loader(1, save=True, num_workers=2, variant = 2, train_p=0.9, saved=True, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False, augment=True)
+getting_loader(1, save=True, num_workers=2, variant = 3, train_p=0.9, saved=True, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False, augment=True)
+getting_loader(1, save=True, num_workers=2, variant = 5, train_p=0.9, saved=True, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False, augment=True)
+getting_loader(1, save=True, num_workers=2, variant = 6, train_p=0.9, saved=True, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False, augment=True)
