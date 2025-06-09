@@ -37,6 +37,7 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
 
     if distr_analysis:
       dataset.distributions_analysis()
+      
     if augment:
       print(f"**BEFORE AUGMENTING** Dataset size: {n}")
       dataset.augmentation(receiver_to_project)
@@ -48,6 +49,7 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
       n_augment = len(dataset)
       n = n_augment
       print(f"**AFTER AUGMENTING** Dataset size: {n_augment}")
+
     if cleaning:
       print(f"**BEFORE CLEANING** Dataset size: {n}")
       dataset.converting_numerical_and_cleaning(receiver_to_project)
