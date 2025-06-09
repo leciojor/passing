@@ -13,7 +13,7 @@ if torch.cuda.is_available():
 else:
   DEVICE = torch.device("cpu")
 
-def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=True, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=True, play_id=None, game_id=None, cleaning=True, split=True, passed_result_extra = False, beta=True, get_receiver_id=False, intended_receiver_input=False, receiver_to_project=0, just_shoulder_orientation=False):
+def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0.7, saved=True, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=True, play_id=None, game_id=None, cleaning=True, split=True, passed_result_extra = False, beta=True, get_receiver_id=False, intended_receiver_input=False, receiver_to_project=0, just_shoulder_orientation=False, augment=False):
     if not beta:
         file_name = f"./finalFeatures/datasetsAlpha/final_data_variant{variant}_{all_frames}"
     else:
@@ -37,7 +37,17 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
 
     if distr_analysis:
       dataset.distributions_analysis()
-
+    if augment:
+      print(f"**BEFORE AUGMENTING** Dataset size: {n}")
+      dataset.augmentation(receiver_to_project)
+      if save:
+          if all_frames:
+            dataset.get_csv(name = file_name + f"_game{game_id}_play{play_id}_cleaned.csv")
+          else:
+            dataset.get_csv(name = file_name + f"_cleaned.csv")
+      n_augment = len(dataset)
+      n = n_augment
+      print(f"**AFTER AUGMENTING** Dataset size: {n_augment}")
     if cleaning:
       print(f"**BEFORE CLEANING** Dataset size: {n}")
       dataset.converting_numerical_and_cleaning(receiver_to_project)

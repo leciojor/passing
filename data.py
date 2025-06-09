@@ -131,7 +131,8 @@ class PlaysData(Dataset):
                 filtered_df = filtered_df.merge(self.players[['nflId', 'position']], on='nflId', how='left')
                 play_df = filtered_df.merge(self.plays, on=['gameId', 'playId'], how='inner')
 
-                self.play_df_formation(self.game_id, self.play_id, play_df)
+                if play_df.iloc[0]["isDropback"]:
+                    self.play_df_formation(self.game_id, self.play_id, play_df)
 
     def play_df_formation(self, gameId, playId, play_df):
         
@@ -324,9 +325,9 @@ class PlaysData(Dataset):
             for (gameId, playId), play_df in merged.groupby(['gameId', 'playId']):
                 self.gameId = gameId
                 self.playId = playId
-                                
-                if not self.play_df_formation(gameId, playId, play_df):
-                    continue
+                if play_df.iloc[0]["isDropback"]:
+                    if not self.play_df_formation(gameId, playId, play_df):
+                        continue
                 
                 if self.all:
                     break
@@ -370,7 +371,7 @@ class PlaysData(Dataset):
                     self.data[col] = pd.Categorical(self.data[col], categories=PlaysData.RECEIVER_TYPES)
 
                 #filling the rest of nans (discrete features) with the most common class
-                self.data[col].fillna(self.data[col].mode()[0], inplace=True)
+                # self.data[col].fillna(self.data[col].mode()[0], inplace=True)
 
                 dummies = pd.get_dummies(self.data[col], prefix=col, dtype=int)
                 result_parts.append(dummies)
@@ -380,7 +381,7 @@ class PlaysData(Dataset):
         if not self.just_shoulder_orientation:
             #probably not a good idea for features like position, velocity
             #filling the rest of nans (numerical features) with the average
-            self.data.fillna(self.data.mean(), inplace=True)
+            # self.data.fillna(self.data.mean(), inplace=True)
 
             if r:
                 def round_(x):
@@ -389,11 +390,15 @@ class PlaysData(Dataset):
                     return x 
                 self.data = self.data.applymap(round_)
 
-        #numerical features normalization (except yardline)
-        if n:
-            for col in tqdm(self.data.columns):
-                if not col == "yardLine" and not col == "result" and not col in PlaysData.NUMERICAL_DISCRETE_FEATURES and pd.api.types.is_numeric_dtype(self.data[col]):
-                    self.data[col] = (self.data[col] - self.data[col].min()) / (self.data[col].max() - self.data[col].min())
+            #numerical features normalization (except yardline)
+            if n:
+                for col in tqdm(self.data.columns):
+                    if not col == "yardLine" and not col == "result" and not col in PlaysData.NUMERICAL_DISCRETE_FEATURES and pd.api.types.is_numeric_dtype(self.data[col]):
+                        self.data[col] = (self.data[col] - self.data[col].min()) / (self.data[col].max() - self.data[col].min())
+            
+             #filling positional features nans with out of bounds values (doing after normalization to not affect normalization)
+            self.data.fillna(150, inplace=True)
+
         
         self.data.reset_index(drop=True, inplace=True)
         self.length = len(self.data)
