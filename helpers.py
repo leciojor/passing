@@ -40,7 +40,7 @@ def getting_loader(batch_size, save=False, num_workers=2, variant = 1, train_p=0
 
     if augment:
       print(f"**BEFORE AUGMENTING** Dataset size: {n}")
-      dataset.augmentation(receiver_to_project)
+      dataset.augmentation()
       n_augment = len(dataset)
       n = n_augment
       print(f"**AFTER AUGMENTING** Dataset size: {n_augment}")
