@@ -14,7 +14,6 @@ class DeepQBVariant1(nn.Module):
     def __init__(self, input_dim=230, hidden_dim1=256, hidden_dim2=128, output_dim=5, dropout_rate=0.3):
         super(DeepQBVariant1, self).__init__()
 
-        #First layer 230 -> 256
         self.fc1 = nn.Linear(input_dim, hidden_dim1)
         self.bn1 = nn.BatchNorm1d(hidden_dim1)
         self.dropout1 = nn.Dropout(dropout_rate)

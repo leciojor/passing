@@ -141,7 +141,7 @@ def getting_time_series_analysis_binary_classification(model_file, i=4):
 def calibration_analysis():
         models_folder = "models/datasetsBetaFinalCleanedVersion/"
         for filename in os.listdir(models_folder):
-            if not filename == "model_variant1_lr0.01_n250000_with shoulder orientation.pkl":
+            if not filename == "model_variant1_lr0.01_n250000_with shoulder orientation.pkl" and not os.path.isdir("./" + models_folder + filename):
                 variant = int(re.search(r'variant(\d)', filename).group(1))
                 drop = not "shoulder" in filename and variant == 1
                 loader, dataset = getting_loader(1, save=False, num_workers=0, variant = variant, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True, drop_qb_orientation=drop, split=False, beta=True)
@@ -173,16 +173,15 @@ def calibration_analysis():
                             actual = torch.argmax(y)
                         elif variant == 5:
                             prob = torch.sigmoid(y_hat)
-                            inference = prob > 0.5
+                            inference = prob
                             actual = y
                         results.append(inference.squeeze().item())
                         actuals.append(actual.squeeze().item())
                 
                 plt.figure(figsize=(8, 6))
                 if variant == 5:
-                    actuals, results = calibration_curve(actuals, results)
-                    plt.figure(figsize=(8, 6))
-                    plt.plot(results, actuals, "o-", label="Model")
+                    prob_true, prob_pred = calibration_curve(actuals, results, n_bins=10)
+                    plt.plot(prob_pred, prob_true, "o-", label="Model")
                     plt.plot([0, 1], [0, 1], "k--", label="Perfectly calibrated")
                     plt.xlabel("Mean Predicted Probability (Complete)")
                     plt.ylabel("Fraction of Positives (Observed Frequency)")

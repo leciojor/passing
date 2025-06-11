@@ -141,7 +141,7 @@ class PlaysData(Dataset):
 
         if flip:
             play_df['x'] = PlaysData.FIELD_LENGTH - play_df['x']
-            play_df['y'] = PlaysData.FIELD_LENGTH - play_df['y']
+            play_df['y'] = PlaysData.FIELD_WIDTH - play_df['y']
             play_df['o'] =  (180 + play_df['o']) % 360
             play_df['dir'] = (180 + play_df['dir']) % 360
 
@@ -456,18 +456,18 @@ class PlaysData(Dataset):
         #mirror receiver y-coordinates and orientations
         for i in range(5): 
             mirrored_df[f'y_{i}'] = PlaysData.FIELD_WIDTH - self.data[f'y_{i}']
-            mirrored_df[f'orientation_{i}'] = (360 - self.data[f'orientation_{i}']) % 360
+            mirrored_df[f'orientation_{i}'] = (180 - self.data[f'orientation_{i}']) % 360
 
         #mirror defender y-coordinates and orientations (2 defenders per receiver)
         for i in range(5):  
             for j in range(2): 
                 mirrored_df[f'defensor_y_{i}_{j}'] = PlaysData.FIELD_WIDTH - self.data[f'defensor_y_{i}_{j}']
-                mirrored_df[f'defensor_orientation_{i}_{j}'] = (360 - self.data[f'defensor_orientation_{i}_{j}']) % 360
+                mirrored_df[f'defensor_orientation_{i}_{j}'] = (180 - self.data[f'defensor_orientation_{i}_{j}']) % 360
 
         #mirror QB y, orientation, and direction
         mirrored_df['qb_y'] = PlaysData.FIELD_WIDTH - self.data['qb_y']
-        mirrored_df['qb_orientation'] = (360 - self.data['qb_orientation']) % 360
-        mirrored_df['qb_direction'] = (360 - self.data['qb_direction']) % 360
+        mirrored_df['qb_orientation'] = (180 - self.data['qb_orientation']) % 360
+        mirrored_df['qb_direction'] = (180 - self.data['qb_direction']) % 360
 
         self.data = pd.concat([self.data, mirrored_df], ignore_index=True)
 
