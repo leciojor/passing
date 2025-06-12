@@ -397,7 +397,7 @@ class PlaysData(Dataset):
                         self.data[col] = (self.data[col] - self.data[col].min()) / (self.data[col].max() - self.data[col].min())
             
              #filling positional features nans with out of bounds values (doing after normalization to not affect normalization)
-            self.data.fillna(150, inplace=True)
+            self.data.fillna(-1, inplace=True)
 
         
         self.data.reset_index(drop=True, inplace=True)
@@ -465,7 +465,7 @@ class PlaysData(Dataset):
                 mirrored_df[f'defensor_orientation_{i}_{j}'] = (180 - self.data[f'defensor_orientation_{i}_{j}']) % 360
 
         #mirror QB y, orientation, and direction
-        
+
         mirrored_df['qb_y'] = PlaysData.FIELD_WIDTH - self.data['qb_y']
         mirrored_df['qb_orientation'] = (180 - self.data['qb_orientation']) % 360
         mirrored_df['qb_direction'] = (180 - self.data['qb_direction']) % 360

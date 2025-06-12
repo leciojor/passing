@@ -16,7 +16,7 @@ else:
 
 
 def getting_results_distribution():
-    models_folder = "models/datasetsBetaFinalCleanedVersion"
+    models_folder = "models/augmented"
     for filename in os.listdir(models_folder):
         variant = int(re.search(r'variant(\d)', filename).group(1))
         if variant == 2:
@@ -213,9 +213,8 @@ def getting_time_series_analysis_multi_class_classification(model_file):
 def getting_time_series_analysis_for_each_receiver(model_file):
     pass
 
-# getting_results_distribution()
-calibration_analysis()
-# shoulder_orientation_feature_correlation_analysis()
+getting_results_distribution()
+# calibration_analysis()
 
 # for filename in os.listdir("models"):
 #     file_path = os.path.join("models", filename)
