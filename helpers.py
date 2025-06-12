@@ -190,8 +190,8 @@ def plotting(version, loss_training, acc_training, loss_val, acc_val):
   plot_(f"Loss Validation {version}", loss_val, "Loss", val=True)
   plot_(f"Accuracy Validation {version}", acc_val, "Accuracy", val=True)
 
-# getting_loader(1, save=True, num_workers=2, variant = 1, train_p=0.9, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False, augment=True)
-# getting_loader(1, save=True, num_workers=2, variant = 2, train_p=0.9, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False, augment=True)
-# getting_loader(1, save=True, num_workers=2, variant = 3, train_p=0.9, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False, augment=True)
-# getting_loader(1, save=True, num_workers=2, variant = 5, train_p=0.9, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False, augment=True)
-# getting_loader(1, save=True, num_workers=2, variant = 6, train_p=0.9, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False, augment=True)
+getting_loader(1, save=True, num_workers=2, variant = 1, train_p=0.9, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False, augment=True)
+getting_loader(1, save=True, num_workers=2, variant = 2, train_p=0.9, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False, augment=True)
+getting_loader(1, save=True, num_workers=2, variant = 3, train_p=0.9, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False, augment=True)
+getting_loader(1, save=True, num_workers=2, variant = 5, train_p=0.9, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False, augment=True)
+getting_loader(1, save=True, num_workers=2, variant = 6, train_p=0.9, saved=False, drop_qb_orientation = False, get_dataset=False, all_frames=False, distr_analysis=False, play_id=None, game_id=None, split=False, augment=True)

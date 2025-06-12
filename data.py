@@ -465,6 +465,7 @@ class PlaysData(Dataset):
                 mirrored_df[f'defensor_orientation_{i}_{j}'] = (180 - self.data[f'defensor_orientation_{i}_{j}']) % 360
 
         #mirror QB y, orientation, and direction
+        
         mirrored_df['qb_y'] = PlaysData.FIELD_WIDTH - self.data['qb_y']
         mirrored_df['qb_orientation'] = (180 - self.data['qb_orientation']) % 360
         mirrored_df['qb_direction'] = (180 - self.data['qb_direction']) % 360
