@@ -16,7 +16,7 @@ else:
 
 
 def getting_results_distribution():
-    models_folder = "models/augmented"
+    models_folder = "models/betaAugmented"
     for filename in os.listdir(models_folder):
         variant = int(re.search(r'variant(\d)', filename).group(1))
         if variant == 2:
@@ -60,7 +60,7 @@ def getting_results_distribution():
         plt.xticks(labels)
         plt.grid(axis='y', linestyle='--', alpha=0.7)
         plt.tight_layout()
-        plt.savefig(f"distributions/models/finalBetaVersion/distribution_variant{variant}_model {filename}.png")
+        plt.savefig(f"distributions/models/betaAugmented/distribution_variant{variant}_model {filename}.png")
         plt.show()
 
 def shoulder_orientation_feature_correlation_analysis():
@@ -139,7 +139,7 @@ def getting_time_series_analysis_binary_classification(model_file, i=4):
     plt.show()
 
 def calibration_analysis():
-        models_folder = "models/datasetsBetaFinalCleanedVersion/"
+        models_folder = "models/betaAugmented/"
         for filename in os.listdir(models_folder):
             if not filename == "model_variant1_lr0.01_n250000_with shoulder orientation.pkl" and not os.path.isdir("./" + models_folder + filename):
                 variant = int(re.search(r'variant(\d)', filename).group(1))
@@ -195,7 +195,7 @@ def calibration_analysis():
                     plt.ylabel("Model Prediction")
                     plt.title(f"Variant {variant} results")
                     plt.tight_layout()
-                plt.savefig(f"moreAnalysis/finalBetaVersion/variant{variant}Calibration.png")
+                plt.savefig(f"moreAnalysis/betaAugmented/variant{variant}Calibration.png")
                 plt.show()
 
                 # plt.figure(figsize=(8, 5))
@@ -213,8 +213,8 @@ def getting_time_series_analysis_multi_class_classification(model_file):
 def getting_time_series_analysis_for_each_receiver(model_file):
     pass
 
-getting_results_distribution()
-# calibration_analysis()
+# getting_results_distribution()
+calibration_analysis()
 
 # for filename in os.listdir("models"):
 #     file_path = os.path.join("models", filename)
