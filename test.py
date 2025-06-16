@@ -115,9 +115,9 @@ def shoulder_orientation_feature_correlation_analysis():
     plt.savefig("moreAnalysis/angularDifference.png")
     plt.show()
 
-def getting_time_series_analysis_binary_classification(model_file, i=4):
+def getting_time_series_analysis_binary_classification(model_file, i=4, game_id = 2022091200, play_id = 1487):
     variant = 5
-    loader, dataset = getting_loader(1, save=False, num_workers=0, variant = variant, train_p=0.8, saved=False, distr_analysis=False, get_dataset=True, all_frames=True, i=i, split=False)
+    loader, dataset = getting_loader(1, save=False, num_workers=0, variant = variant, train_p=0.8, saved=False, distr_analysis=False, get_dataset=True, all_frames=True, i=i, split=False, game_id=game_id, play_id=play_id)
     state = torch.load(model_file, map_location=DEVICE)
     output_dim = 1
     model = DeepQBVariant1(input_dim=dataset.col_size - output_dim, output_dim=output_dim)
@@ -135,7 +135,7 @@ def getting_time_series_analysis_binary_classification(model_file, i=4):
     
     plt.title(f"Time Series of pass completion probability {model_file[-20:]} instance {i}")
     plt.plot(list(range(i_)), predictions)
-    plt.savefig(f"timeseries/timeseries_analysis_model{model_file[-20:]}instance {i}.png")
+    plt.savefig(f"timeseries/betaAugmented/timeseries_analysis_model{model_file[-20:]}instance {i}.png")
     plt.show()
 
 def calibration_analysis():
@@ -214,14 +214,14 @@ def getting_time_series_analysis_for_each_receiver(model_file):
     pass
 
 # getting_results_distribution()
-calibration_analysis()
+# calibration_analysis()
 
-# for filename in os.listdir("models"):
-#     file_path = os.path.join("models", filename)
-#     variant = int(re.search(r'variant(\d+)', filename).group(1))
-#     if variant == 5:
-#         for i in [4,6]:
-#             getting_time_series_analysis_binary_classification(file_path, i=i)
+for filename in os.listdir("models/betaAugmented"):
+    file_path = os.path.join("models/betaAugmented", filename)
+    variant = int(re.search(r'variant(\d+)', filename).group(1))
+    if variant == 5:
+        for i in [4,6]:
+            getting_time_series_analysis_binary_classification(file_path, i=i)
 
 
 
