@@ -393,7 +393,7 @@ class PlaysData(Dataset):
             #numerical features normalization (except yardline)
             if n:                    
                 for col in tqdm(self.data.columns):                        
-                    if not col == "yardLine" and not col == "result" and not col in PlaysData.NUMERICAL_DISCRETE_FEATURES and pd.api.types.is_numeric_dtype(self.data[col]):
+                    if not "receiver_type_" in col and (not "route_ran_" in col) and (not col == "yardLine") and (not col == "result") and (not col in PlaysData.NUMERICAL_DISCRETE_FEATURES) and pd.api.types.is_numeric_dtype(self.data[col]):
                         try:
 
                             if self.all:
