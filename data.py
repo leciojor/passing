@@ -391,10 +391,13 @@ class PlaysData(Dataset):
                 self.data = self.data.applymap(round_)
 
             #numerical features normalization (except yardline)
-            if n:
-                for col in tqdm(self.data.columns):
+            if n:                    
+                for col in tqdm(self.data.columns):                        
                     if not col == "yardLine" and not col == "result" and not col in PlaysData.NUMERICAL_DISCRETE_FEATURES and pd.api.types.is_numeric_dtype(self.data[col]):
-                        self.data[col] = (self.data[col] - self.data[col].min()) / (self.data[col].max() - self.data[col].min())
+                        if self.all:
+                            self.data[col] = (self.data[col] - self.data[col].mean())/self.data[col].std()
+                        else:
+                            self.data[col] = (self.data[col] - self.data[col].min()) / (self.data[col].max() - self.data[col].min())
             
              #filling positional features nans with out of bounds values (doing after normalization to not affect normalization)
             self.data.fillna(-1, inplace=True)
@@ -477,7 +480,6 @@ class PlaysData(Dataset):
 
     def get_csv(self, name):
         self.data.to_csv(name, index=False)
-
 
 
 
