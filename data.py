@@ -15,6 +15,10 @@ class PlaysData(Dataset):
     FIELD_WIDTH = 53.3
     NUMERICAL_DISCRETE_FEATURES = {"down", "amount_of_players_causing_pressure_on_qb"}
     DROP_SUBSET = ['result', 'x_0'] 
+    EXPECTED_ROUTES = [
+    "ANGLE", "CORNER", "CROSS", "FLAT", "GO", "HITCH",
+    "IN", "OUT", "POST", "SCREEN", "SLANT", "WHEEL"]
+
 
 
     def plot_distributions(data, col, v):
@@ -344,7 +348,40 @@ class PlaysData(Dataset):
         self.receivers = self.receivers.merge(receiver_positions, on='nflId', how='left')
 
         self.receivers = self.receivers.sort_values(by='y', ascending=True).head(5)
-        
+    
+    def generate_columns(self, prefix, indices, suffixes):
+        return [f"{prefix}_{i}_{suf}" for i in indices for suf in suffixes]
+
+    def insert_missing_columns(self, column_groups):
+        existing = set(self.data.columns)
+        new_order = []
+        inserted_groups = set()
+
+        for col in self.data.columns:
+            if col.startswith("down_") and "down" not in inserted_groups:
+                expected_cols = column_groups["down"]
+                combined = [c for c in expected_cols if c in self.data.columns or c not in existing]
+                combined_sorted = sorted(combined, key=lambda x: int(x.split("_")[1]))
+                new_order.extend(combined_sorted)
+                inserted_groups.add("down")
+            elif not col.startswith("down_"):
+                new_order.append(col)
+
+            for group_prefix, expected_cols in column_groups.items():
+                if group_prefix == "down":
+                    continue
+                if col.startswith(group_prefix) and group_prefix not in inserted_groups:
+                    to_insert = [c for c in expected_cols if c not in existing]
+                    new_order.extend(to_insert)
+                    inserted_groups.add(group_prefix)
+
+        for group_cols in column_groups.values():
+            for col in group_cols:
+                if col not in self.data.columns:
+                    self.data[col] = 0
+
+        self.data = self.data[new_order]
+
     def converting_numerical_and_cleaning(self, r=False, n=True, receiver_to_project=0):
          #removing initial nans 
         if self.just_shoulder_orientation:
@@ -369,6 +406,9 @@ class PlaysData(Dataset):
             else:
                 if any(col == f'receiver_type_{i}' for i in range(5)):
                     self.data[col] = pd.Categorical(self.data[col], categories=PlaysData.RECEIVER_TYPES)
+                if any(col == f'route_ran_{i}' for i in range(5)):
+                    self.data[col] = pd.Categorical(self.data[col], categories=PlaysData.EXPECTED_ROUTES)
+
 
                 #filling the rest of nans (discrete features) with the most common class
                 # self.data[col].fillna(self.data[col].mode()[0], inplace=True)
@@ -390,10 +430,25 @@ class PlaysData(Dataset):
                     return x 
                 self.data = self.data.applymap(round_)
 
+            #adding the rest of the classes fearures for one hot encoded features in case they were not present (all frames scenario) (because of normalization)
+            #does not consider variant 1 and variant 6 (result classes)
+            if self.all:
+                route_ran_columns = self.generate_columns("route_ran", range(5), PlaysData.EXPECTED_ROUTES)
+                receiver_type_columns = self.generate_columns("receiver_type", range(5), PlaysData.RECEIVER_TYPES)
+                down_columns = [f"down_{i}" for i in range(1, 5)]
+
+                column_groups = {
+                    "route_ran": route_ran_columns,
+                    "receiver_type": receiver_type_columns,
+                    "down": down_columns
+                }
+
+                self.insert_missing_columns(column_groups)
+
             #numerical features normalization (except yardline)
             if n:                    
                 for col in tqdm(self.data.columns):                        
-                    if not "receiver_type_" in col and (not "route_ran_" in col) and (not col == "yardLine") and (not col == "result") and (not col in PlaysData.NUMERICAL_DISCRETE_FEATURES) and pd.api.types.is_numeric_dtype(self.data[col]):
+                    if not "receiver_type_" in col and (not "route_ran_" in col) and (not col == "yardLine") and (not col == "result") and (not "down" in col) and (not col in PlaysData.NUMERICAL_DISCRETE_FEATURES) and pd.api.types.is_numeric_dtype(self.data[col]):
                         try:
 
                             if self.all:
