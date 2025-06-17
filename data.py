@@ -394,11 +394,23 @@ class PlaysData(Dataset):
             if n:                    
                 for col in tqdm(self.data.columns):                        
                     if not col == "yardLine" and not col == "result" and not col in PlaysData.NUMERICAL_DISCRETE_FEATURES and pd.api.types.is_numeric_dtype(self.data[col]):
-                        if self.all:
-                            self.data[col] = (self.data[col] - self.data[col].mean())/self.data[col].std()
-                        else:
-                            self.data[col] = (self.data[col] - self.data[col].min()) / (self.data[col].max() - self.data[col].min())
-            
+                        try:
+
+                            if self.all:
+                                if not self.beta:
+                                    file_name = f"./finalFeatures/datasetsAlpha/final_data_variant{self.v}_{self.all}"
+                                else:
+                                    file_name = f"./finalFeatures/final_data_variant{self.v}_{self.all}"     
+                                #getting full dataset because of normalization logic (needs to normalize the instance again based on the values (min max) of the old dataset)
+                                full_data = pd.read_csv(file_name + f"_game{self.game_id}_play{self.play_id}.csv")
+
+                                self.data[col] =  (self.data[col] - full_data.min()) / (full_data.max() - full_data.min())
+                            else:
+                                self.data[col] = (self.data[col] - self.data[col].min()) / (self.data[col].max() - self.data[col].min())
+
+                        except FileNotFoundError as e:
+                            raise Exception("All frames mode can only be used if the full dataset has already been generated and saved")
+                                    
              #filling positional features nans with out of bounds values (doing after normalization to not affect normalization)
             self.data.fillna(-1, inplace=True)
 
