@@ -398,13 +398,13 @@ class PlaysData(Dataset):
 
                             if self.all:
                                 if not self.beta:
-                                    file_name = f"./finalFeatures/datasetsAlpha/final_data_variant{self.v}_{self.all}"
+                                    file_name = f"./finalFeatures/datasetsAlpha/final_data_variant{self.v}_False"
                                 else:
-                                    file_name = f"./finalFeatures/final_data_variant{self.v}_{self.all}"     
+                                    file_name = f"./finalFeatures/final_data_variant{self.v}_False"     
                                 #getting full dataset because of normalization logic (needs to normalize the instance again based on the values (min max) of the old dataset)
-                                full_data = pd.read_csv(file_name + f"_game{self.game_id}_play{self.play_id}.csv")
+                                full_data = pd.read_csv(file_name + f".csv")
 
-                                self.data[col] =  (self.data[col] - full_data.min()) / (full_data.max() - full_data.min())
+                                self.data[col] =  (self.data[col] - full_data[col].min()) / (full_data[col].max() - full_data[col].min())
                             else:
                                 self.data[col] = (self.data[col] - self.data[col].min()) / (self.data[col].max() - self.data[col].min())
 
