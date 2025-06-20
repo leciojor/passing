@@ -2,11 +2,12 @@ import torch
 import os
 import matplotlib.pyplot as plt
 from collections import Counter
-from helpers import getting_loader
+from helpers import getting_loader, get_intended_receiver_simple_algo
 from archs import DeepQBVariant1
 import re
 import seaborn as sns
 from sklearn.calibration import calibration_curve
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import numpy as np
 
 if torch.cuda.is_available():
@@ -117,7 +118,7 @@ def shoulder_orientation_feature_correlation_analysis():
 
 def getting_time_series_analysis_binary_classification(model_file, game_id = 2022091200, play_id = 1487):
     variant = 5
-    loader, dataset = getting_loader(1, save=True, num_workers=0, variant = variant, train_p=0.8, saved=False, distr_analysis=False, get_dataset=True, all_frames=True, split=False, game_id=game_id, play_id=play_id)
+    loader, dataset = getting_loader(1, save=True, num_workers=0, variant = variant, train_p=0.8, saved=True, distr_analysis=False, get_dataset=True, all_frames=True, split=False, game_id=game_id, play_id=play_id)
     state = torch.load(model_file, map_location=DEVICE)
     output_dim = 1
     model = DeepQBVariant1(input_dim=dataset.col_size - output_dim, output_dim=output_dim)
@@ -205,6 +206,26 @@ def calibration_analysis():
                 # plt.savefig("moreAnalysis/yardsGainedDifference.png")
                 # plt.show()
 
+def testing_simple_algo_for_getting_receiver():
+    preds, y = get_intended_receiver_simple_algo()
+
+    #just dummy add for confusion matrix logic
+    preds.append(0)
+    y.append(0)
+    
+    preds = torch.tensor(preds)
+    y = torch.tensor(preds)
+    inferences = (preds == y).float()
+    acc = torch.mean(inferences).item()
+    print(f"Accuracy: {acc}")
+
+    cm = confusion_matrix(y, preds)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=[0, 1, 2, 3, 4])
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    disp.plot(ax=ax, cmap="Blues", values_format="d")
+    plt.title("Confusion Matrix - Intended Receiver Classification with Simple Projection Algo.")
+    plt.show()
 
 
 def getting_time_series_analysis_multi_class_classification(model_file):
@@ -216,12 +237,14 @@ def getting_time_series_analysis_for_each_receiver(model_file):
 # getting_results_distribution()
 # calibration_analysis()
 
-for filename in os.listdir("models/betaAugmented"):
-    file_path = os.path.join("models/betaAugmented", filename)
-    variant = int(re.search(r'variant(\d+)', filename).group(1))
-    if variant == 5:
-        for i in [4,6]:
-            getting_time_series_analysis_binary_classification(file_path)
+# for filename in os.listdir("models/betaAugmented"):
+#     file_path = os.path.join("models/betaAugmented", filename)
+#     variant = int(re.search(r'variant(\d+)', filename).group(1))
+#     if variant == 5:
+#         for i in [4,6]:
+#             getting_time_series_analysis_binary_classification(file_path)
+
+testing_simple_algo_for_getting_receiver()
 
 
 

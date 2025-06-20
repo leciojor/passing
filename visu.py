@@ -13,28 +13,24 @@ if torch.cuda.is_available():
 else:
   DEVICE = torch.device("cpu")
 
-MODEL_FILE = "models/datasetsAlpha/model_variant5_lr_0.01_n250000.pkl"
+MODEL_FILE = "models/betaAugmented/model_variant5_lr0.01_n250000.pkl"
 
 RECEIVER_TYPES = ["WR", "TE", "QB", "RB", "FB"]
 
 def get_model_prediction_for_receiver(dataset, receiver, model_file, index):
-    try:
-        output_dim = 1
-        x, projected_orientation, real_angle = dataset.get_orientation_based_on_receiver(receiver, index, output_dim = 1)
-        x = x.float().unsqueeze(0)
+    output_dim = 1
+    x, projected_orientation, real_angle = dataset.get_orientation_based_on_receiver(receiver, index, output_dim = 1)
+    x = x.float().unsqueeze(0)
 
-        state = torch.load(model_file, map_location=DEVICE)
-        model = DeepQBVariant1(input_dim=dataset.col_size - output_dim, output_dim=output_dim)
-        model.load_state_dict(state)
-        model.eval()
+    state = torch.load(model_file, map_location=DEVICE)
+    model = DeepQBVariant1(input_dim=dataset.col_size - output_dim, output_dim=output_dim)
+    model.load_state_dict(state)
+    model.eval()
 
-        y_hat = model(x)
-        prob = torch.sigmoid(y_hat) 
-        return prob.item()
+    y_hat = model(x)
+    prob = torch.sigmoid(y_hat) 
+    return prob.item()
     
-    except RuntimeError:
-        # ideal would be to change the logic to clean/prepare the data generalizing for all situations
-        raise Exception("chosen instance does not have enough data (does not have data for all features used to train the model) e.g. there is no data at all for some defender or something like that to average out")
 
 def get_frames_indexes(play_data):
     try:
@@ -193,13 +189,14 @@ def animate_play(game_id: int, play_id: int,
                 save=False,
                 display_angles=False,
                 line_length=15,
-                receiver_to_project=0) -> None:
+                receiver_to_project=0,
+                beta=True) -> None:
     """Animate player tracking data for a specific play."""
 
     # getting dataset for receiver passing completion analysis
-    dataset = getting_frames_dataset(game_id, play_id, loaded, save, False, receiver_to_project)
+    dataset = getting_frames_dataset(game_id, play_id, loaded, save, False, receiver_to_project, beta=beta)
     if display_angles:
-        dataset_angles = getting_frames_dataset(game_id, play_id, False, False, True, receiver_to_project)
+        dataset_angles = getting_frames_dataset(game_id, play_id, False, False, True, receiver_to_project, beta=beta)
 
     # Get data for this play
     play_data = get_play_data(game_id, play_id, df_tracking, df_players, df_plays, df_games)
@@ -495,7 +492,7 @@ def main():
     #    3980, 4012
     
     print(f"Animating game {game_id}, play {play_id}...")
-    animate_play(game_id, play_id, df_tracking, df_players, df_plays, df_games, df_play_players, show_labels='position', loaded=False, save=True, display_angles=False)
+    animate_play(game_id, play_id, df_tracking, df_players, df_plays, df_games, df_play_players, show_labels='position', loaded=True, save=False, display_angles=False)
 
 if __name__ == "__main__":
     main() 

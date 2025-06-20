@@ -500,9 +500,9 @@ class PlaysData(Dataset):
             plt.clf()
 
 
-    def get_orientation_based_on_receiver(self, receiver, index, output_dim, x_qb=None, y_qb=None, x_receiver=None, y_receiver=None):
+    def get_orientation_based_on_receiver(self, receiver, index, output_dim=1, x_qb=None, y_qb=None, x_receiver=None, y_receiver=None, intended=False):
         if not index is None:
-            row = self.data.iloc[index, :-output_dim]
+            row = self.data.iloc[index, :]
             x_qb = row["qb_x"]
             y_qb = row["qb_y"]
             x_receiver = row[f"x_{receiver}"]
@@ -516,7 +516,10 @@ class PlaysData(Dataset):
             real_angle = row["qb_orientation"]
             row["qb_orientation"] = projected_angle
 
-            return torch.tensor(row), row["qb_orientation"], real_angle
+            if intended:
+                return row["qb_orientation"], real_angle, row["result"]
+            else:
+                return torch.tensor(row), row["qb_orientation"], real_angle
         
         return  projected_angle
     

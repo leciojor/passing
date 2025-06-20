@@ -41,7 +41,37 @@ class DeepQBVariant1(nn.Module):
         logits = self.output_layer(x)
         # probs = F.softmax(logits, dim=1)
         return logits
-    
+
+#logic to get the intended receiver based exclusively on the projected oriented that is the closest to the real orientation
+def intended_receiver_simple_algo(dataset, index):
+        diff = float("inf")
+        prediction = None
+        for _ in range(5):
+            projected_orientation, real_angle, intended = dataset.get_orientation_based_on_receiver(_, index, intended=True)
+            curr_diff = abs((projected_orientation - real_angle + 180) % 360 - 180)
+            if curr_diff < diff:
+                diff = curr_diff
+                prediction = _
+
+        return prediction, intended
+
+def getting_all_intended_receivers_simple_algo(dataset, index):
+    predictions, intended_receivers  = [], []
+
+    for i in range(len(dataset)):
+        if not index is None:
+            prediction, intended = intended_receiver_simple_algo(dataset, index)
+        else:
+            prediction, intended = intended_receiver_simple_algo(dataset, i)
+
+        if prediction and intended:
+            predictions.append(prediction)
+            intended_receivers.append(intended)
+        
+        if not index is None:
+            break
+    return predictions, intended_receivers
+
 
 # ---------------------------------------------------
 # DeepQB Variant 2: Predict expected yards gained

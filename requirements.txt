@@ -7,3 +7,4 @@ regex
 typing
 kaggle
 seaborn
+scikit-learn
